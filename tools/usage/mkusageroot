@@ -1,0 +1,35 @@
+#!/bin/sh
+# mkusageroot: make the stage1u build root (the tool-usage inventory pass) on a build host.
+#
+#   tools/usage/mkusageroot BASE.tar.zst OUTPUT.tar.zst
+#
+# BASE is a stage 1 build root (tools/mkchroot). The output is BASE with four files appended
+# (owned by root): /usr/lib/yohane-usage.so (yohane-usage.c compiled inside BASE, so against its
+# C library), /etc/ld.so.preload naming it, an empty world-writable /var/tmp/yohane-usage.log,
+# and /usr/lib/yohane-usage-report, which buildone runs when sbuild cleans the chroot up.
+# BASE is extended, not repacked, so its device nodes survive (an unshared root can't create
+# them). Only stage1u uses this root; nothing built in it is published.
+set -eu
+base=${1:?usage: mkusageroot BASE.tar.zst OUTPUT.tar.zst}; out=${2:?}
+here=$(cd "$(dirname "$0")" && pwd)
+t=$(mktemp -d "${YOHANE_SCRATCH:-/tmp}/usageroot.XXXXXX"); chmod 777 "$t"
+cp "$here/yohane-usage.c" "$t/"; chmod 644 "$t/yohane-usage.c"
+# Compile in a scratch copy of BASE (device nodes can't be made there; the compiler doesn't need them).
+zstdcat "$base" | mmdebstrap --unshare-helper sh -c "
+  mkdir $t/r; tar -C $t/r -xf - 2>/dev/null
+  cp $t/yohane-usage.c $t/r/tmp/
+  chroot $t/r gcc -O2 -fPIC -shared -Wall -o /tmp/yohane-usage.so /tmp/yohane-usage.c &&
+  cp $t/r/tmp/yohane-usage.so $t/yohane-usage.so && chmod 644 $t/yohane-usage.so
+  rm -rf $t/r"
+[ -s "$t/yohane-usage.so" ] || { echo "mkusageroot: compiling the logger failed" >&2; exit 1; }
+mkdir -p "$t/f/usr/lib" "$t/f/etc" "$t/f/var/tmp"
+cp "$t/yohane-usage.so" "$t/f/usr/lib/"; chmod 644 "$t/f/usr/lib/yohane-usage.so"
+cp "$here/yohane-usage-report" "$t/f/usr/lib/"; chmod 755 "$t/f/usr/lib/yohane-usage-report"
+echo /usr/lib/yohane-usage.so > "$t/f/etc/ld.so.preload"; chmod 644 "$t/f/etc/ld.so.preload"
+: > "$t/f/var/tmp/yohane-usage.log"; chmod 666 "$t/f/var/tmp/yohane-usage.log"
+zstdcat "$base" > "$t/root.tar"
+tar -C "$t/f" --owner=0 --group=0 --numeric-owner -rf "$t/root.tar" \
+  ./usr/lib/yohane-usage.so ./usr/lib/yohane-usage-report ./etc/ld.so.preload ./var/tmp/yohane-usage.log
+zstd -q -T0 -f "$t/root.tar" -o "$out.tmp"
+mv -f "$out.tmp" "$out"; rm -rf "$t"
+echo "mkusageroot: $out ($(du -h "$out" | cut -f1))"
