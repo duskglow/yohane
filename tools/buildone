@@ -49,7 +49,7 @@ cd "$work" || exit 1
 case "$STAGE" in
   stage0)  opts=(--no-arch-all --arch-any); dbo="noautodbgsym"; patches=no;;   # pure baseline: Devuan as is
   stage0p) opts=(--no-arch-all --arch-any); dbo="noautodbgsym"; patches=yes;;  # baseline + Yohane patches (glibc)
-  # Stage 1 (decision 12): built in the chroot with Liella swapped in, tests on,
+  # Stage 1 (decision 12): built in the chroot with libniji swapped in, tests on,
   # Yohane patches applied; outputs gated (tools/elfgate) and staged for the
   # "bootstrap" suite.
   stage1)  opts=(--no-arch-all --arch-any); dbo="noautodbgsym"; patches=yes
@@ -155,7 +155,7 @@ run_sbuild
 
 # Stage 1: a failure in the build step (where the package's own tests run) is a
 # finding; keep its log as .check.log.zst and build once more with nocheck, so
-# the bootstrap can proceed. Result "oknc" = built, but its tests failed on Liella.
+# the bootstrap can proceed. Result "oknc" = built, but its tests failed on libniji.
 if [ "$STAGE" = stage1 ] && [ "$res" = fail ] && [ "${failstage:-}" = build ] \
    && [[ ",$profiles," != *",nocheck,"* ]]; then
   mv -f "$dest" "$logdir/${SRC}_${VER}.check.log.zst"
@@ -174,7 +174,7 @@ cp -f "$work"/*.buildinfo "$logdir/" 2>/dev/null
 if [ "$STAGE" = stage1 ] && { [ "$res" = ok ] || [ "$res" = oknc ]; }; then
   allowed="${YOHANE_CHROOT%.tar.zst}.allowed-2.4x"
   if [ ! -s "$allowed" ]; then
-    # The GLIBC_2.40/2.41 symbols the chroot's Liella libc.so.6 defines.
+    # The GLIBC_2.40/2.41 symbols the chroot's libniji libc.so.6 defines.
     t=$(mktemp -d); tar --zstd -C "$t" -xf "$YOHANE_CHROOT" ./usr/lib/x86_64-linux-gnu/ 2>/dev/null
     readelf --dyn-syms -W "$(readlink -f "$t/usr/lib/x86_64-linux-gnu/libc.so.6" || echo "$t/usr/lib/x86_64-linux-gnu/libc.so.6")" 2>/dev/null \
       | awk '$7 != "UND" && $8 ~ /@GLIBC_2\.4[01]$/ { sub(/@@?/, "@", $8); print $8 }' | sort -u > "$allowed.tmp"

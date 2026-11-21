@@ -4,7 +4,7 @@ Status: **complete.** Run of 2026-11-15 (gcc-14 finished 23:05 UTC, after a rebu
 
 Stage 0 rebuilds every source package of tier T1 (a base Devuan excalibur system, 173 source packages) with
 **glibc**, on the same infrastructure later stages use. Every later stage is compared against it: a package that
-builds and passes its tests here but fails with Liella points at Liella; one that fails here doesn't.
+builds and passes its tests here but fails with libniji points at libniji; one that fails here doesn't.
 
 ## How it was built
 
@@ -78,7 +78,7 @@ Devuan itself never meets these. That's the reason for decision 11.
 
 ## Build-host problems found along the way
 
-None of these were package or Liella problems; each was diagnosed before anything was rerun, and each is fixed in
+None of these were package or libniji problems; each was diagnosed before anything was rerun, and each is fixed in
 `tools/buildone`:
 
 1. **Job time cap.** The host job queue caps shared jobs at 150 minutes by default, which cut off binutils and gcc-14.
@@ -96,6 +96,6 @@ The lesson recorded for later stages: **when a test fails in only one environmen
 - **Patch mechanism:** done. Stage `stage0p` applies `packages/<source>/patches/` to the verified Devuan source
   (`tools/getsource`), versions it `<version>yohane<N>` and builds it; the elfutils patch is the first.
 - **Tier T2** (the build dependencies of T0–T1, resolved in the build environment): being computed (`tools/builddeps`).
-- **Stage 1** starts with Liella's next snapshot tag. Liella's side of stage 1 was complete on 2026-11-15, and the
-  snapshot is in its final validation. It ships a coexistence flavour (`liella6`, `liella6-dev`) for building against
-  Liella on a glibc host.
+- **Stage 1** starts with libniji's next snapshot tag. libniji's side of stage 1 was complete on 2026-11-15, and the
+  snapshot is in its final validation. It ships a coexistence flavour (`niji6`, `niji6-dev`) for building against
+  libniji on a glibc host.

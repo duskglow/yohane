@@ -27,7 +27,7 @@
  flavours :=
  define gen_biarch
 -  ifneq (yes,$$(call envfilt, biarch, , ,yes))
-+  # Yohane: no multilib by default (Liella is 64-bit only); lang=biarch turns it back on.
++  # Yohane: no multilib by default (libniji is 64-bit only); lang=biarch turns it back on.
 +  ifneq (yes,$$(call envfilt, biarch, , ,no))
      biarch$1archs :=
    endif

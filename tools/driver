@@ -17,7 +17,7 @@ directory, signed on this host. With "ledger": {"tool", "repo", "as"}, every
 host is checked against the shared resource ledger before a build is started
 there; during a maintenance window it gets no new builds.
 
-Operating rules (learned by Liella, adopted by Yohane):
+Operating rules (learned by libniji, adopted by Yohane):
   - No retries: a failure is a result, recorded once. Requeue by hand after a fix.
   - Systemic detector: when the same failure signature hits 3 or more different
     sources, dispatch stops and an event is raised. Fix the shared cause first.

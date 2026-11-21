@@ -9,7 +9,7 @@ Status: 0001 active; bootstrap trims planned (patch written when first needed)
 
 **Problem.** On amd64, Debian builds gcc with 32-bit (`-m32`) and x32 (`-mx32`) multilib: extra runtime libraries
 (`lib32gcc-s1`, `libx32stdc++6`, ...) and a test-suite pass per configuration. That needs glibc's 32-bit and x32
-libraries (`libc6-dev-i386`, `libc6-dev-x32`), and gcc also build-depends on `libc6-dbg`. Liella is 64-bit only, has
+libraries (`libc6-dev-i386`, `libc6-dev-x32`), and gcc also build-depends on `libc6-dbg`. libniji is 64-bit only, has
 no debug-symbol package, and Yohane doesn't ship multilib (design, section 1), so in stage 1 the build dependencies
 couldn't be installed (2026-11-16).
 

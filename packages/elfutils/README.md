@@ -25,7 +25,7 @@ explicit exception to decision 1 (built by Yohane instead of imported).
 ## 0002: no gcc-multilib
 
 **Problem.** elfutils build-depends on `gcc-multilib` (for its tests of 32-bit objects), which needs glibc's 32-bit
-libraries. Liella is 64-bit only and Yohane doesn't ship multilib, so in stage 1 the build dependencies couldn't be
+libraries. libniji is 64-bit only and Yohane doesn't ship multilib, so in stage 1 the build dependencies couldn't be
 installed (2026-11-16).
 
 **Change.** `0002-no-gcc-multilib.patch` removes it from `debian/control`. The tests that compile 32-bit objects are

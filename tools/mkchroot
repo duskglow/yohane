@@ -16,9 +16,9 @@
 #   - the dpkg vendor is Debian, as it was for the Debian builds of these
 #     packages, so vendor checks behave as on Debian.
 #
-# With --liella-swap VERSION --yohane-repo URL (stage 1, decision 12), Liella's
+# With --niji-swap VERSION --yohane-repo URL (stage 1, decision 12), libniji's
 # system flavour at VERSION replaces glibc in the chroot, with throwaway glibc
-# headers; see tools/liella-swap.sh. Its log is printed at the end.
+# headers; see tools/niji-swap.sh. Its log is printed at the end.
 #
 # Uses mmdebstrap --mode=unshare (no root). Each mirror is trusted only through
 # its signed InRelease, checked against the pinned keyrings in --keyrings DIR;
@@ -42,8 +42,8 @@ while [ $# -gt 1 ]; do
     --debian) DEBIAN=$2; shift 2;;
     --debian-security) DEBSEC=$2; shift 2;;
     --debian-suite) DSUITE=$2; shift 2;;
-    --liella-swap) LIELLA_VERSION=$2; shift 2;;   # stage 1: swap Liella's system flavour in (decision 12)
-    --yohane-repo) YOHANE_REPO=$2; shift 2;;      # where the "liella" suite is served
+    --niji-swap|--liella-swap) NIJI_VERSION=$2; shift 2;;   # stage 1: swap libniji's system flavour in (decision 12); --liella-swap is the old name
+    --yohane-repo) YOHANE_REPO=$2; shift 2;;      # where the "niji" suite is served
     *) echo "unknown option: $1" >&2; exit 2;;
   esac
 done
@@ -87,15 +87,15 @@ Pin-Priority: 500"
   keyring=(--keyring="$KEYRINGS")
 fi
 
-if [ -n "${LIELLA_VERSION:-}" ]; then
-  # Stage 1 (decision 12): Liella's system flavour replaces glibc in the chroot. See tools/liella-swap.sh.
+if [ -n "${NIJI_VERSION:-}" ]; then
+  # Stage 1 (decision 12): libniji's system flavour replaces glibc in the chroot. See tools/niji-swap.sh.
   AKR="$KEYRINGS/yohane-archive-keyring.gpg"
-  [ -n "${YOHANE_REPO:-}" ] || { echo "mkchroot: --liella-swap needs --yohane-repo URL" >&2; exit 2; }
+  [ -n "${YOHANE_REPO:-}" ] || { echo "mkchroot: --niji-swap needs --yohane-repo URL" >&2; exit 2; }
   [ -r "$AKR" ] || { echo "mkchroot: missing $AKR" >&2; exit 2; }
   hooks+=(--customize-hook="copy-in $AKR /etc/apt/trusted.gpg.d/"
-          --customize-hook="upload $(cd "$(dirname "$0")" && pwd)/liella-swap.sh /tmp/yohane-liella-swap.sh"
-          --customize-hook="chroot \"\$1\" sh /tmp/yohane-liella-swap.sh '$LIELLA_VERSION' '$YOHANE_REPO'"
-          --customize-hook='rm -f "$1/tmp/yohane-liella-swap.sh"; cat "$1/var/log/yohane-liella-swap.log" >&2')
+          --customize-hook="upload $(cd "$(dirname "$0")" && pwd)/niji-swap.sh /tmp/yohane-niji-swap.sh"
+          --customize-hook="chroot \"\$1\" sh /tmp/yohane-niji-swap.sh '$NIJI_VERSION' '$YOHANE_REPO'"
+          --customize-hook='rm -f "$1/tmp/yohane-niji-swap.sh"; cat "$1/var/log/yohane-niji-swap.log" >&2')
 fi
 
 case "$OUT" in *.tar.zst) ;; *) echo "mkchroot: OUTPUT must end in .tar.zst" >&2; exit 2;; esac

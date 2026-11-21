@@ -1,6 +1,6 @@
 Source: dbus
 Applies-To: excalibur
-Kind: bootstrap (0001); also a build-fix until Liella ships libc6-dbg
+Kind: bootstrap (0001); also a build-fix until libniji ships libc6-dbg
 Status: 0001 active
 
 # dbus
@@ -15,9 +15,9 @@ This keeps large build-dependency chains out of the minimal bootstrap set (they 
 for `tools/builddeps`). `debian/rules` configures with `-Dvalgrind=auto`, so dbus builds without its Valgrind client
 requests. They only help Valgrind runs; nothing else changes.
 
-**Also needed on Liella.** On amd64 `valgrind-if-available` is `valgrind`, and Debian's `valgrind` depends on glibc's
-debug-symbols package `libc6-dbg`. Liella has no `libc6-dbg` (duskglow/libniji#13), so in stage 1 the build
+**Also needed on libniji.** On amd64 `valgrind-if-available` is `valgrind`, and Debian's `valgrind` depends on glibc's
+debug-symbols package `libc6-dbg`. libniji has no `libc6-dbg` (duskglow/libniji#13), so in stage 1 the build
 dependencies couldn't be installed (2026-11-17). python3.13's 0001 is the same change.
 
-**Restored in the full pass,** once the system rebuilds itself and Liella ships a `libc6-dbg`; Snow Halation ships the
+**Restored in the full pass,** once the system rebuilds itself and libniji ships a `libc6-dbg`; Snow Halation ships the
 full-featured build.

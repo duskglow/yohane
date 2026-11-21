@@ -1,17 +1,17 @@
 # Yohane Linux
 
 Yohane Linux is an experimental reference Linux distribution based on [Devuan](https://www.devuan.org/) excalibur. Its C
-library is [Liella](https://github.com/duskglow/liella), a clean-room Rust implementation of the glibc ABI, instead of
-glibc. Everything that links a C library is rebuilt from Devuan's sources against Liella, and glibc isn't installed.
+library is [libniji](https://github.com/duskglow/libniji), a clean-room Rust implementation of the glibc ABI, instead of
+glibc. Everything that links a C library is rebuilt from Devuan's sources against libniji, and glibc isn't installed.
 Apart from that, Yohane stays as close to a plain Devuan base system as it can.
 
-The first release is **Snow Halation**: a base Devuan system, with sysvinit, running entirely on Liella.
+The first release is **Snow Halation**: a base Devuan system, with sysvinit, running entirely on libniji.
 
-**Status:** the glibc baseline build is complete; the first builds against Liella are waiting on a Liella fix. Nothing
+**Status:** the glibc baseline build is complete; the first builds against libniji are waiting on a libniji fix. Nothing
 is installable yet.
 
-- [Design](docs/design.md): how Yohane is built, published and tested, and what it needs from Liella.
-- Bugs in Liella found while building Yohane are reported on [duskglow/liella](https://github.com/duskglow/liella/issues).
+- [Design](docs/design.md): how Yohane is built, published and tested, and what it needs from libniji.
+- Bugs in libniji found while building Yohane are reported on [duskglow/libniji](https://github.com/duskglow/libniji/issues).
 
 ## Name and mascot
 

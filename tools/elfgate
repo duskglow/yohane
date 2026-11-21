@@ -1,17 +1,17 @@
 #!/bin/bash
-# elfgate: check binary packages built against Liella (stage 1, decision 12).
+# elfgate: check binary packages built against libniji (stage 1, decision 12).
 #
 #   tools/elfgate ALLOWED-2.4x-SYMBOLS DEB...
 #
-# ALLOWED-2.4x-SYMBOLS lists "symbol@GLIBC_2.4x" entries that Liella's libc.so.6
-# defines (Liella's label stays 2.39 while it implements some later symbols).
+# ALLOWED-2.4x-SYMBOLS lists "symbol@GLIBC_2.4x" entries that libniji's libc.so.6
+# defines (libniji's label stays 2.39 while it implements some later symbols).
 # Each DEB is refused when any of its ELF objects:
-#   - needs a GLIBC_2.40/GLIBC_2.41 symbol that Liella does not define (the
+#   - needs a GLIBC_2.40/GLIBC_2.41 symbol that libniji does not define (the
 #     throwaway headers are glibc 2.41's, so a configure check or a fortify
 #     redirect can bind one), or
-#   - names libmvec (Liella has none),
+#   - names libmvec (libniji has none),
 # or when its control file depends on libc6 (>= 2.40) or (>= 2.41) (it then
-# could not be installed on Liella, whose version sorts below 2.40).
+# could not be installed on libniji, whose version sorts below 2.40).
 # Prints one "GATE <PASS|FAIL> <deb> [reason]" line per package; exit 1 if any fails.
 set -uo pipefail
 ALLOWED=${1:?usage: elfgate ALLOWED-2.4x-SYMBOLS DEB...}; shift

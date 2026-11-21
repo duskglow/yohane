@@ -8,7 +8,7 @@ Status: active (UEFI-only until BIOS support is investigated)
 **Problem.** On amd64, Debian's grub2 also builds the 32-bit x86 boot platforms: BIOS (`grub-pc`, `grub-rescue-pc`,
 `grub-firmware-qemu`), 32-bit UEFI (`grub-efi-ia32`), coreboot, IEEE 1275 and Xen. GRUB itself doesn't use a C
 library, but its 32-bit build needs gcc's 32-bit support (`gcc-multilib`), which in Debian depends on glibc's 32-bit
-libraries. Liella is 64-bit only, so in stage 1 the build dependencies couldn't be installed (2026-11-16).
+libraries. libniji is 64-bit only, so in stage 1 the build dependencies couldn't be installed (2026-11-16).
 
 **Owner decision (2026-11-16): UEFI-only for now.** `0001-uefi-only-on-amd64.patch`:
 - drops `gcc-multilib` from the build dependencies on amd64;
