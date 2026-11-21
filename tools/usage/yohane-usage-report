@@ -1,9 +1,13 @@
 #!/bin/sh
 # yohane-usage-report: run in the stage1u build chroot when sbuild cleans it up (tools/buildone).
 # Prints the usage log aggregated per program into the build log, one line each:
-#   YOHANE-USAGE <executable path> <processes> <user µs> <system µs> <largest max RSS KiB>
+#   YOHANE-USAGE <executable> <processes> <user µs> <system µs> <largest max RSS KiB>
+#                <processes under 10 ms CPU> <their CPU µs> <processes under 1 ms CPU> <their CPU µs>
+# (CPU = user + system. The short-process columns show how much start-up cost matters.)
 L=/var/tmp/yohane-usage.log
 echo "YOHANE-USAGE-BEGIN $(wc -l < $L 2>/dev/null || echo 0) processes"
-[ -s $L ] && awk '{n[$1]++; u[$1]+=$2; s[$1]+=$3; if ($4 > m[$1]) m[$1] = $4}
-  END {for (k in n) print "YOHANE-USAGE", k, n[k], u[k], s[k], m[k]}' $L | sort
+[ -s $L ] && awk '{k = $1; c = $2 + $3; n[k]++; u[k] += $2; s[k] += $3; if ($4 > m[k]) m[k] = $4
+    if (c < 10000) { n10[k]++; c10[k] += c }
+    if (c < 1000)  { n1[k]++;  c1[k]  += c } }
+  END {for (k in n) print "YOHANE-USAGE", k, n[k], u[k], s[k], m[k], n10[k] + 0, c10[k] + 0, n1[k] + 0, c1[k] + 0}' $L | sort
 echo "YOHANE-USAGE-END"
