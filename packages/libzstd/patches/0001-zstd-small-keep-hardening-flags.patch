@@ -1,0 +1,23 @@
+Description: zstd-small: add -Os to CFLAGS instead of replacing them
+ programs/Makefile gives zstd-small its own "CFLAGS = -Os -Wl,-s", which drops
+ every flag the build passes in, the distribution's hardening flags included
+ (-fcf-protection among them). LDFLAGS are kept, and lib/libzstd.mk adds
+ "-z cet-report=error" whenever a trivial link with it succeeds. That happens
+ when the C library's start files carry the IBT and SHSTK properties. Then
+ zstd-small's own objects, built without -fcf-protection, fail to link
+ ("missing IBT and SHSTK properties"). Append -Os so zstd-small is built like
+ every other program.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/programs/Makefile
++++ b/programs/Makefile
+@@ -252,7 +252,7 @@
+
+ ## zstd-small: minimal target, supporting only zstd compression and decompression. no bench. no legacy. no other format.
+ CLEAN += zstd-small zstd-frugal
+-zstd-small: CFLAGS = -Os -Wl,-s
++zstd-small: CFLAGS += -Os -Wl,-s
+ zstd-frugal zstd-small: $(ZSTDLIB_CORE_SRC) zstdcli.c util.c timefn.c fileio.c fileio_asyncio.c
+ 	$(CC) $(FLAGS) -DZSTD_NOBENCH -DZSTD_NODICT -DZSTD_NOTRACE -UZSTD_LEGACY_SUPPORT -DZSTD_LEGACY_SUPPORT=0 $^ -o $@$(EXT)
+
