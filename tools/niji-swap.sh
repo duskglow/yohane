@@ -9,7 +9,10 @@
 #     never shipped). It is built here from the verified excalibur packages.
 #  2. libniji's libc6, libc-bin, libc-dev-bin and libc6-dev at NIJI_VERSION, from the Yohane
 #     SUITE suite ("niji"), installed over glibc's (a downgrade, so --force-depends).
-#  3. apt is pinned to keep exactly these versions.
+#  2b. libniji's libc6-dbg at NIJI_VERSION is offered, not installed, from a local repository in
+#     the chroot, so a build that needs it (Debian's valgrind depends on libc6-dbg) gets
+#     libniji's and never glibc's.
+#  3. apt is pinned to keep exactly these versions (libc6-dbg included).
 #  4. Installed packages that declare libc6 (>= 2.40) or (>= 2.41) keep that
 #     dependency, unless every GLIBC_2.40/GLIBC_2.41 symbol their ELF files
 #     need is defined by libniji's libc.so.6; only then is the recorded version
@@ -67,9 +70,17 @@ for pv in "libc6 $LV" "libc-bin $LV" "libc-dev-bin $LV" "libc6-dev $LV" "yohane-
   log "installed: $1 $got"
 done
 
+# 2b. libc6-dbg, offered through a local repository (installed only by builds that need it)
+DBG=/var/lib/yohane-niji-dbg
+mkdir -p "$DBG"
+(cd "$DBG" && apt-get download -qq "libc6-dbg=$LV" && dpkg-scanpackages -m . 2>/dev/null > Packages)
+[ -s "$DBG/Packages" ] || { log "SWAP FAILED: no libc6-dbg $LV"; exit 1; }
+echo "deb [trusted=yes] file:$DBG ./" > /etc/apt/sources.list.d/yohane-niji-dbg.list
+log "offered: libc6-dbg $LV (local repository $DBG)"
+
 # 3. pin
 cat > /etc/apt/preferences.d/yohane-niji-swap <<P
-Package: libc6 libc-bin libc-dev-bin libc6-dev
+Package: libc6 libc-bin libc-dev-bin libc6-dev libc6-dbg
 Pin: version $LV
 Pin-Priority: 1001
 
@@ -110,4 +121,7 @@ apt-get check >apt.err 2>&1 && log "apt-get check: OK" || {
   log "apt-get check: FAILED"; cat apt.err >> /var/log/yohane-niji-swap.log; cat apt.err >&2; exit 1; }
 rm -f /etc/apt/sources.list.d/yohane-niji.list
 apt-get update -qq || true
+# libc6-dbg must resolve to libniji's: check what installing valgrind would pull in.
+cand=$(apt-cache policy libc6-dbg | awk '/Candidate:/ {print $2}')
+[ "$cand" = "$LV" ] && log "libc6-dbg candidate: $cand" || { log "SWAP FAILED: libc6-dbg candidate is $cand, expected $LV"; exit 1; }
 cd /; rm -rf "$W"
