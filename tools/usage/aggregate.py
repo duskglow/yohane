@@ -45,7 +45,8 @@ for f in sorted(glob.glob(os.path.join(logdir, "*.log.zst"))):
         path = l[1]; v = list(map(int, l[2:]))
         # Programs a package builds and runs from its own build tree (its test suite, mostly) are
         # one category per source, not tens of thousands of paths.
-        if path.startswith("/<<PKGBUILDDIR>>/"):
+        # (Test suites also build and run programs under /tmp, /var/tmp and /build.)
+        if "<<PKGBUILDDIR>>" in path or path.startswith(("/tmp/", "/var/tmp/", "/build/")):
             path = "[built in tree: " + src + "]"
         a = prog[path]
         a[0] += v[0]; a[1] += v[1]; a[2] += v[2]; a[3] = max(a[3], v[3])
@@ -67,7 +68,7 @@ with open(os.path.join(outdir, "per-program.tsv"), "w") as o:
     for p in order:
         a = prog[p]
         top = ",".join(s for s, _ in users[p].most_common(3))
-        o.write(f"{p}\t{pkgmap.get(p, '')}\t{a[0]}\t{len(users[p])}\t{cpu(a)/1e6:.2f}\t{cpu(a)/tot_cpu:.5f}\t{a[1]/1e6:.2f}\t{a[2]/1e6:.2f}\t{a[3]}\t{a[4]}\t{a[5]/1e6:.2f}\t{a[6]}\t{a[7]/1e6:.2f}\t{top}\n")
+        o.write(f"{p}\t{pkgmap.get(p, '-') if pkgmap.get(p, '?') != '?' else '-'}\t{a[0]}\t{len(users[p])}\t{cpu(a)/1e6:.2f}\t{cpu(a)/tot_cpu:.5f}\t{a[1]/1e6:.2f}\t{a[2]/1e6:.2f}\t{a[3]}\t{a[4]}\t{a[5]/1e6:.2f}\t{a[6]}\t{a[7]/1e6:.2f}\t{top}\n")
 with open(os.path.join(outdir, "per-source.tsv"), "w") as o:
     o.write("source\tprogram\tprocs\tcpu_us\n")
     for r in sorted(srcrows):
@@ -86,7 +87,10 @@ md.append(f"| under 1 ms CPU each | {tot_n1:,} ({pct(tot_n1, tot_procs)}) | {h(t
 if pkgmap:
     pk = collections.defaultdict(lambda: [0, 0, 0, 0, set()])
     for p, a in prog.items():
-        k = pkgmap.get(p, "?"); b = pk[k]
+        k = pkgmap.get(p, "?")
+        if k == "?" and p.startswith("[built in tree"): k = "(built in tree)"
+        elif k == "?": k = "(build dependency, not placed)"
+        b = pk[k]
         b[0] += a[0]; b[1] += cpu(a); b[2] += a[4]; b[3] += a[5]; b[4].add(os.path.basename(p))
     md.append("## By binary package (top 30 by CPU)\n")
     md.append("| package | processes | CPU | share | procs < 10 ms | their CPU | programs |\n|---|---|---|---|---|---|---|")
@@ -98,12 +102,12 @@ md.append("## Programs, top 40 by CPU\n")
 md.append("| program | package | processes | sources | CPU | share | procs < 10 ms | their CPU | most CPU in |\n|---|---|---|---|---|---|---|---|---|")
 for p in order[:40]:
     a = prog[p]
-    md.append(f"| `{p}` | {pkgmap.get(p, '')} | {a[0]:,} | {len(users[p])} | {h(cpu(a))} | {pct(cpu(a), tot_cpu)} | {pct(a[4], a[0])} | {pct(a[5], cpu(a))} | {', '.join(s for s, _ in users[p].most_common(3))} |")
+    md.append(f"| `{p}` | {pkgmap.get(p, '-') if pkgmap.get(p, '?') != '?' else '-'} | {a[0]:,} | {len(users[p])} | {h(cpu(a))} | {pct(cpu(a), tot_cpu)} | {pct(a[4], a[0])} | {pct(a[5], cpu(a))} | {', '.join(s for s, _ in users[p].most_common(3))} |")
 md.append("\n## Programs, top 40 by process count\n")
 md.append("| program | package | processes | sources | CPU | procs < 10 ms | procs < 1 ms | most processes in |\n|---|---|---|---|---|---|---|---|")
 for p in sorted(prog, key=lambda p: -prog[p][0])[:40]:
     a = prog[p]
-    md.append(f"| `{p}` | {pkgmap.get(p, '')} | {a[0]:,} | {len(users[p])} | {h(cpu(a))} | {pct(a[4], a[0])} | {pct(a[6], a[0])} | {', '.join(s for s, _ in users_n[p].most_common(3))} |")
+    md.append(f"| `{p}` | {pkgmap.get(p, '-') if pkgmap.get(p, '?') != '?' else '-'} | {a[0]:,} | {len(users[p])} | {h(cpu(a))} | {pct(a[4], a[0])} | {pct(a[6], a[0])} | {', '.join(s for s, _ in users_n[p].most_common(3))} |")
 open(os.path.join(outdir, "summary.md"), "w").write("\n".join(md) + "\n")
 print(f"{len(sources)} sources, {len(prog)} programs, {tot_procs:,} processes, {tot_cpu/1e6/3600:.1f} CPU-hours; "
       f"<10ms: {pct(tot_n10, tot_procs)} of processes, {pct(tot_c10, tot_cpu)} of CPU; old format: {len(oldfmt)}; none: {len(nousage)}")
