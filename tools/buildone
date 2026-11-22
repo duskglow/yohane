@@ -57,7 +57,10 @@ case "$STAGE" in
   # Stage 1u: the tool-usage inventory pass (for nijicore). Built as stage 1, but in a root where
   # every process logs its CPU time when it exits (tools/usage); the per-program totals go into the
   # build log as YOHANE-USAGE lines. Nothing is gated, retried without tests, or published.
-  stage1u) opts=(--no-arch-all --arch-any --chroot-cleanup-commands=/usr/lib/yohane-usage-report)
+  # The report runs from sbuild's cleanup hook, and also from its build-failed hook, because sbuild
+  # skips the cleanup hook's output when a build fails (the aggregator reads the first report only).
+  stage1u) opts=(--no-arch-all --arch-any --chroot-cleanup-commands=/usr/lib/yohane-usage-report
+                 --build-failed-commands=/usr/lib/yohane-usage-report)
            dbo="noautodbgsym"; patches=yes
            export YOHANE_CHROOT=${YOHANE_CHROOT_STAGE1U:?set YOHANE_CHROOT_STAGE1U};;
   *) echo "RESULT error 0 - unknown-stage"; exit 2;;
