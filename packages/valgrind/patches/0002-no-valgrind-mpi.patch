@@ -2,12 +2,14 @@ Description: no valgrind-mpi while MPI is trimmed
  Yohane's bootstrap drops mpi-default-dev from the build dependencies
  (packages/valgrind/drop-build-deps), so libmpiwrap is not built and
  valgrind-mpi would be empty. Drop the package; the rules already keep
- libmpiwrap out of valgrind.
+ libmpiwrap out of valgrind. That leaves one binary package, so debhelper
+ would install into debian/valgrind; keep debian/tmp, which valgrind.install
+ expects.
 Author: Yohane Linux Maintainers <aqours@koiren.ai>
 Forwarded: not-needed
 
---- a/debian/control	2026-11-24 09:40:15.775320471 +0000
-+++ b/debian/control	2026-11-24 09:40:15.775320471 +0000
+--- a/debian/control	2026-11-24 10:11:22.240528954 +0000
++++ b/debian/control	2026-11-24 10:11:22.240528954 +0000
 @@ -42,17 +42,3 @@
    * a stack/global array overrun detector (SGCheck)
    * a second heap profiler that examines how heap blocks are used (DHAT)
@@ -26,3 +28,17 @@ Forwarded: not-needed
 - .
 - This package provides the "mpiwrap" library for debugging distributed-memory
 - applications which use the MPI message passing standard.
+--- a/debian/rules	2026-11-24 10:11:22.240528954 +0000
++++ b/debian/rules	2026-11-24 10:11:22.240528954 +0000
+@@ -38,6 +38,11 @@
+ 	: # do nothing for now
+ 
+ target=$(CURDIR)/debian/valgrind
++override_dh_auto_install:
++	# with valgrind-mpi gone this is a single-package source, which debhelper
++	# would install straight into debian/valgrind; the .install files expect debian/tmp
++	dh_auto_install --destdir=debian/tmp
++
+ override_dh_install:
+ 	dh_install -pvalgrind -Xlibmpiwrap
+ 	dh_install --remaining-packages

@@ -35,3 +35,7 @@ configure so the recorded path stays right. T2 went from 268 to 259 sources.
 
 **Change.** `patches/0002-no-valgrind-mpi.patch` removes the `valgrind-mpi` package from `debian/control`.
 **Restore** together with the MPI trim: delete both.
+
+**0002 revised (2026-11-24):** with `valgrind-mpi` gone the source has one binary package, so debhelper installed
+straight into `debian/valgrind` and `valgrind.install` (which reads `debian/tmp`) found nothing. 0002 now also adds
+`override_dh_auto_install` with `--destdir=debian/tmp`.
