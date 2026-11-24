@@ -1,0 +1,19 @@
+Description: build-depend on Boost's headers, not on Boost.Test
+ libftdi1 needs Boost's headers for its C++ binding (libftdipp1), and Boost.Test
+ only for its unit tests. libboost-test-dev pulls Boost's compiled test library,
+ so the whole of Boost (MPI included) must be built first; libboost-dev is
+ headers only. 0002 builds the tests only when tests run.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/control	2026-11-24 05:45:32.873617185 +0000
++++ b/debian/control	2026-11-24 05:45:32.873617185 +0000
+@@ -4,7 +4,7 @@
+ Maintainer: Aurelien Jarno <aurel32@debian.org>
+ Build-Depends: debhelper-compat (= 13), cmake, libusb-1.0-0-dev, pkgconf
+ Build-Depends-Arch: dh-sequence-python3,
+-                    libboost-test-dev,
++                    libboost-dev,
+                     libconfuse-dev,
+                     libpython3-all-dev,
+                     python3-all:any,
