@@ -1,0 +1,28 @@
+Description: debian/rules: tolerate a missing bash-doc examples directory (nodoc)
+ With the nodoc build profile, dh_installexamples does nothing for the
+ documentation package bash-doc, so debian/bash-doc/usr/share/doc/bash/examples
+ is never created, and the two "cd ... && chmod" steps in the install target
+ fail the whole arch-dependent build. Skip them when the directory is absent;
+ a normal build is unchanged.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules
++++ b/debian/rules
+@@ -239,11 +239,12 @@
+ 	ln -sf ../$(p)/examples $(d_doc)/usr/share/doc/$(p_doc)/examples
+ 
+ 	rm -rf $(d_doc)/usr/share/doc/$(p)/examples/obashdb
+-	cd $(d_doc)/usr/share/doc/$(p)/examples && chmod 755 \
+-		misc/aliasconv.*sh misc/cshtobash
++	: # with the nodoc profile, dh_installexamples skips bash-doc, so its examples may be absent
++	[ ! -d $(d_doc)/usr/share/doc/$(p)/examples ] || { cd $(d_doc)/usr/share/doc/$(p)/examples && chmod 755 \
++		misc/aliasconv.*sh misc/cshtobash; }
+ 
+-	cd $(d_doc)/usr/share/doc/$(p)/examples && chmod 644 \
+-		scripts/shprompt
++	[ ! -d $(d_doc)/usr/share/doc/$(p)/examples ] || { cd $(d_doc)/usr/share/doc/$(p)/examples && chmod 644 \
++		scripts/shprompt; }
+ 
+ 	: # files for the bash-builtins package
+ 	mv $(d)/usr/include $(d_bins)/usr/.
