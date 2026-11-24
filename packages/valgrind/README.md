@@ -19,3 +19,12 @@ Status: active
 **Problem.** Its T2 build failed at install-deps (or would have): `gcc-multilib` and `libc6-dev-i386` need glibc's 32-bit C library, which Yohane doesn't have (decision 21). valgrind's configure finds no `-m32` support and builds the amd64 tools only; the 32-bit x86 tools are not built. Nothing in Yohane runs 32-bit x86 programs.
 
 **Change.** `drop-build-deps` lists `gcc-multilib`, `libc6-dev-i386` (applied by `tools/trimcontrol`); no patch needed.
+
+## 0001 and dropping gdb (2026-11-24)
+
+**Problem.** valgrind build-depends on gdb unconditionally, though its build never runs gdb (`dh_auto_test` does
+nothing) and configure only records gdb's path. In T2 that kept gdb, and through Debian's gdb binary
+source-highlight, Boost (with Boost.MPI), numpy and lapack: 9 sources in all.
+
+**Change.** `drop-build-deps` lists `gdb`; `patches/0001-gdb-path-without-gdb.patch` passes `GDB=/usr/bin/gdb` to
+configure so the recorded path stays right. T2 went from 268 to 259 sources.

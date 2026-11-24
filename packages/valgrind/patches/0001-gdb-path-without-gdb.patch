@@ -1,0 +1,20 @@
+Description: record gdb's path without needing gdb at build time
+ configure looks gdb up with AC_PATH_PROG only to record its path (GDB_PATH,
+ used by vgdb and --vgdb-error hints); the build itself never runs gdb, and
+ debian/rules runs no tests. Pass GDB=/usr/bin/gdb, so gdb can be dropped from
+ the build dependencies (drop-build-deps) without valgrind recording a
+ "no gdb was found" placeholder.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 05:58:53.840885259 +0000
++++ b/debian/rules	2026-11-24 05:58:53.840885259 +0000
+@@ -14,7 +14,7 @@
+ 	dh $@
+ 
+ override_dh_auto_configure:
+-	dh_auto_configure -- --enable-tls CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
++	dh_auto_configure -- --enable-tls GDB=/usr/bin/gdb CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+ 
+ override_dh_auto_test:
+ 	: # do nothing for now
