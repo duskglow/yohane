@@ -26,3 +26,12 @@ annotations (they only make Valgrind runs quieter; nothing else changes).
 **Restored** 2026-11-22. libniji ships `libc6-dbg` (duskglow/libniji#13, closed on `snapshot-2026-11-21.7`), and
 stage 1 build roots offer it from a local repository (tools/niji-swap.sh, step 2b), so `valgrind` installs as a
 build dependency and the patch is gone.
+
+## T2 trim (2026-11-24): the tkinter/IDLE tests that need an X server
+
+**Bootstrap only (decisions 16 and 24).** Yohane builds python3.13 without the tkinter/IDLE tests that need an X server, because xvfb pulls in the X server and Mesa. Found with
+`tools/builddeps` and the min-cut analysis of 2026-11-24: T2 went from 833 sources to 269 with this batch.
+
+**How:** `drop-build-deps` lists `xvfb`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
+
+**Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.

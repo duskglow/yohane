@@ -20,6 +20,8 @@ Writes OUTDIR/NAME.rebuild (sources added beyond SOURCES-FILE, "source version
 origin"), OUTDIR/NAME.import (binaries imported, not rebuilt), OUTDIR/NAME.why
 (for each added source, the chain of build dependencies that pulled it in), and
 OUTDIR/NAME.unresolved (sources whose build dependencies apt couldn't resolve).
+OUTDIR/NAME.heavy lists the sources from tools/heavy-sources that reached the closure, with
+their chains (decision 24: they are built on request, never dragged in).
 NAME defaults to T2.
 
 Needs YOHANE_MIRROR, YOHANE_DEBIAN_MIRROR, YOHANE_DEBIAN_SECURITY_MIRROR and
@@ -276,6 +278,20 @@ def main():
                 f.write(s + ": " + " ; ".join(chain) + "\n")
         with open(os.path.join(outdir, name + ".unresolved"), "w") as f:
             f.writelines(f"{s}: {why}\n" for s, why in sorted(unresolved.items()))
+        # Decision 24: heavy stacks are built on request, never dragged in. Name any that reached the closure.
+        import fnmatch
+        hp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "heavy-sources")
+        pats = [l.strip() for l in open(hp) if l.strip() and not l.startswith("#")] if os.path.exists(hp) else []
+        heavy = sorted(s for s in added if any(fnmatch.fnmatchcase(s, p) for p in pats))
+        with open(os.path.join(outdir, name + ".heavy"), "w") as f:
+            for s in heavy:
+                chain, cur = [], s
+                while cur in why and len(chain) < 50:
+                    parent, via = why[cur]; chain.append(f"{cur} <-[{via}]- {parent}"); cur = parent
+                f.write(s + ": " + " ; ".join(chain) + "\n")
+        if heavy:
+            print(f"WARNING: {len(heavy)} heavy sources (tools/heavy-sources) reached {name}: {' '.join(heavy)}; "
+                  f"chains in {name}.heavy")
         n_deb = sum(1 for _, o in added.values() if o == "debian")
         print(f"{name}: {len(added)} sources added ({n_deb} only in Debian), {len(imports)} binaries imported "
               f"({len(noelf)} of them ELF-free architecture-dependent packages, decision 13), "

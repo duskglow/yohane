@@ -1,0 +1,36 @@
+# Heavy sources (decision 24, 2026-11-24): large stacks Yohane builds only when a package it ships needs them, or the
+# owner asks for them; never because some build dependency drags them in. tools/builddeps names any of these that
+# reaches the closure, with the chain that brought it, in NAME.heavy. One source name or shell-style glob per line.
+# Rust (rustc, the rust-* crates) and LLVM 19 are deliberately not listed: apt's sqv and the nijicore plans need them.
+webkit2gtk
+wpewebkit
+qt6-*
+qtbase-opensource-src
+qtdeclarative-opensource-src
+qtwebengine-opensource-src
+kf5-*
+kf6-*
+gtk+3.0
+gtk4
+gstreamer1.0
+gst-plugins-*
+ffmpeg
+pipewire
+pulseaudio
+mesa
+llvm-toolchain-17
+llvm-toolchain-18
+openjdk-*
+texlive-bin
+golang-*
+samba
+ceph
+gcc-mingw-w64
+vtk9
+opencv
+libreoffice
+firefox-esr
+thunderbird
+chromium
+evolution-data-server
+gnome-*
