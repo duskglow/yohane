@@ -70,17 +70,23 @@ for pv in "libc6 $LV" "libc-bin $LV" "libc-dev-bin $LV" "libc6-dev $LV" "yohane-
   log "installed: $1 $got"
 done
 
-# 2b. libc6-dbg, offered through a local repository (installed only by builds that need it)
+# 2b. libniji's optional packages, offered through a local repository and installed only by builds that need them:
+#     libc6-dbg (valgrind), locales and libc-l10n (bash and others Build-Depend on locales). The "niji" source is
+#     removed below, so without this a build would get Devuan's locales, which needs glibc's libc-bin.
+OPT="libc6-dbg locales libc-l10n"
 DBG=/var/lib/yohane-niji-dbg
 mkdir -p "$DBG"
-(cd "$DBG" && apt-get download -qq "libc6-dbg=$LV" && dpkg-scanpackages -m . 2>/dev/null > Packages)
-[ -s "$DBG/Packages" ] || { log "SWAP FAILED: no libc6-dbg $LV"; exit 1; }
+(cd "$DBG" && for p in $OPT; do apt-get download -qq "$p=$LV" || exit 1; done && dpkg-scanpackages -m . 2>/dev/null > Packages) \
+  || { log "SWAP FAILED: could not download $OPT at $LV"; exit 1; }
+for p in $OPT; do
+  grep -qx "Package: $p" "$DBG/Packages" || { log "SWAP FAILED: no $p $LV"; exit 1; }
+done
 echo "deb [trusted=yes] file:$DBG ./" > /etc/apt/sources.list.d/yohane-niji-dbg.list
-log "offered: libc6-dbg $LV (local repository $DBG)"
+log "offered: $OPT at $LV (local repository $DBG)"
 
 # 3. pin
 cat > /etc/apt/preferences.d/yohane-niji-swap <<P
-Package: libc6 libc-bin libc-dev-bin libc6-dev libc6-dbg
+Package: libc6 libc-bin libc-dev-bin libc6-dev libc6-dbg locales libc-l10n
 Pin: version $LV
 Pin-Priority: 1001
 
@@ -121,7 +127,9 @@ apt-get check >apt.err 2>&1 && log "apt-get check: OK" || {
   log "apt-get check: FAILED"; cat apt.err >> /var/log/yohane-niji-swap.log; cat apt.err >&2; exit 1; }
 rm -f /etc/apt/sources.list.d/yohane-niji.list
 apt-get update -qq || true
-# libc6-dbg must resolve to libniji's: check what installing valgrind would pull in.
-cand=$(apt-cache policy libc6-dbg | awk '/Candidate:/ {print $2}')
-[ "$cand" = "$LV" ] && log "libc6-dbg candidate: $cand" || { log "SWAP FAILED: libc6-dbg candidate is $cand, expected $LV"; exit 1; }
+# The optional packages must resolve to libniji's, not Devuan's higher-versioned ones.
+for p in $OPT; do
+  cand=$(apt-cache policy "$p" | awk '/Candidate:/ {print $2}')
+  [ "$cand" = "$LV" ] && log "$p candidate: $cand" || { log "SWAP FAILED: $p candidate is $cand, expected $LV"; exit 1; }
+done
 cd /; rm -rf "$W"
