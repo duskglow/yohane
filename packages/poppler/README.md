@@ -13,3 +13,7 @@ Status: active
 **How:** `drop-build-deps` lists `libgtk-3-dev`, `qt6-base-dev`, `qtbase5-dev`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
 
 **Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.
+
+**Patch (2026-11-24):** `patches/0001-no-qt-bindings.patch` switches off `ENABLE_QT5` (hard-coded on in
+`debian/rules`) and drops the four Qt binding packages from `debian/control`. Without it the build would fail at
+configure for lack of Qt. The GLib binding is kept.

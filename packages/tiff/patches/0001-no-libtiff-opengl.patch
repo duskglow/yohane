@@ -1,0 +1,30 @@
+Description: no libtiff-opengl during the bootstrap
+ Yohane's bootstrap drops freeglut3-dev, libglu1-mesa-dev and libxi-dev from
+ the build dependencies (drop-build-deps), so tiffgt, the OpenGL viewer, is not
+ built, and its package libtiff-opengl would be empty. Drop the package; the
+ rules already remove tiffgt from libtiff-tools with rm -f.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/control	2026-11-24 06:36:05.897627419 +0000
++++ b/debian/control	2026-11-24 06:36:05.898627408 +0000
+@@ -98,19 +98,6 @@
+  and tools for doing simple manipulations of TIFF images.  See also
+  libtiff-opengl.
+ 
+-Package: libtiff-opengl
+-Section: graphics
+-Architecture: any
+-Multi-Arch: foreign
+-Depends: ${misc:Depends},
+-         ${shlibs:Depends}
+-Description: TIFF manipulation and conversion tools
+- libtiff is a library providing support for the Tag Image File Format
+- (TIFF), a widely used format for storing image data.  This package
+- contains libtiff tools that depend upon opengl.  It complements the
+- libtiff-tools package, which contains the libtiff tools that don't
+- depend upon opengl.
+-
+ Package: libtiff-doc
+ Section: doc
+ Depends: ${misc:Depends}, libjs-jquery, libjs-sphinxdoc, libjs-underscore

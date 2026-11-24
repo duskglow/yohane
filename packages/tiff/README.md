@@ -13,3 +13,6 @@ Status: active
 **How:** `drop-build-deps` lists `freeglut3-dev`, `libglu1-mesa-dev`, `libxi-dev`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
 
 **Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.
+
+**Patch (2026-11-24):** `patches/0001-no-libtiff-opengl.patch` drops the `libtiff-opengl` package (it holds only
+tiffgt, which isn't built without GLUT), so the build doesn't fail on an empty package.

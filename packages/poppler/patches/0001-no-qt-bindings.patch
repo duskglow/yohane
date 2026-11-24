@@ -1,0 +1,89 @@
+Description: build without the Qt 5 and Qt 6 bindings during the bootstrap
+ Yohane's bootstrap drops Qt 5, Qt 6 and GTK 3 from the build dependencies
+ (drop-build-deps). The rules hard-code ENABLE_QT5=ON, so switch it off, and
+ drop the four Qt binding packages from debian/control; Qt 6 is already
+ switched off by the rules once its -dev package is not built. The GLib
+ binding (libpoppler-glib) needs only GLib and is kept.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/control	2026-11-24 06:36:05.796628495 +0000
++++ b/debian/control	2026-11-24 06:36:05.797628484 +0000
+@@ -136,66 +136,6 @@
+  It can be used by packages using the GIRepository format to generate
+  dynamic bindings.
+ 
+-Package: libpoppler-qt5-1t64
+-Provides: ${t64:Provides}
+-Breaks: libpoppler-qt5-1 (<< 24.02.0-3~)
+-Replaces: libpoppler-qt5-1 (<< 24.02.0-3~)
+-Architecture: any
+-Section: libs
+-Multi-Arch: same
+-Depends: libpoppler147 (= ${binary:Version}),
+-         ${misc:Depends},
+-         ${shlibs:Depends}
+-Description: PDF rendering library (Qt 5 based shared library)
+- Poppler is a PDF rendering library based on Xpdf PDF viewer.
+- .
+- This package provides the Qt 5 based shared library for applications
+- using the Qt 5 interface to Poppler.
+-
+-Package: libpoppler-qt5-dev
+-Architecture: any
+-Section: libdevel
+-Multi-Arch: same
+-Depends: libpoppler-dev (= ${binary:Version}),
+-         libpoppler-qt5-1t64 (= ${binary:Version}),
+-         qtbase5-dev,
+-         ${misc:Depends}
+-Description: PDF rendering library -- development files (Qt 5 interface)
+- Poppler is a PDF rendering library based on Xpdf PDF viewer.
+- .
+- This package contains the headers and development libraries needed to
+- build applications using the Qt 5-based Poppler interface.
+-
+-Package: libpoppler-qt6-3t64
+-Provides: ${t64:Provides}
+-Breaks: libpoppler-qt6-3 (<< 24.02.0-3~)
+-Replaces: libpoppler-qt6-3 (<< 24.02.0-3~)
+-Architecture: hurd-any alpha amd64 arm64 armel armhf hppa loong64 m68k mips64el powerpc ppc64 ppc64el riscv64 s390x sh4 sparc64
+-Section: libs
+-Multi-Arch: same
+-Depends: libpoppler147 (= ${binary:Version}),
+-         ${misc:Depends},
+-         ${shlibs:Depends}
+-Description: PDF rendering library (Qt 6 based shared library)
+- Poppler is a PDF rendering library based on Xpdf PDF viewer.
+- .
+- This package provides the Qt 6 based shared library for applications
+- using the Qt 6 interface to Poppler.
+-
+-Package: libpoppler-qt6-dev
+-Architecture: hurd-any alpha amd64 arm64 armel armhf hppa loong64 m68k mips64el powerpc ppc64 ppc64el riscv64 s390x sh4 sparc64
+-Section: libdevel
+-Multi-Arch: same
+-Depends: libpoppler-dev (= ${binary:Version}),
+-         libpoppler-qt6-3t64 (= ${binary:Version}),
+-         qt6-base-dev,
+-         ${misc:Depends}
+-Description: PDF rendering library -- development files (Qt 6 interface)
+- Poppler is a PDF rendering library based on Xpdf PDF viewer.
+- .
+- This package contains the headers and development libraries needed to
+- build applications using the Qt 6-based Poppler interface.
+-
+ Package: libpoppler-cpp2
+ Architecture: any
+ Section: libs
+--- a/debian/rules	2026-11-24 06:36:05.797628484 +0000
++++ b/debian/rules	2026-11-24 06:36:05.797628484 +0000
+@@ -19,7 +19,7 @@
+ 	-DCMAKE_C_FLAGS_RELEASE="$(CFLAGS)"	\
+ 	-DCMAKE_CXX_FLAGS_RELEASE="$(CXXFLAGS)"	\
+ 	-DENABLE_GLIB=ON			\
+-	-DENABLE_QT5=ON				\
++	-DENABLE_QT5=OFF			\
+ 	-DENABLE_CPP=ON				\
+ 	-DENABLE_GTK_DOC=$(if $(filter libpoppler-glib-doc,$(shell dh_listpackages)),ON,OFF) \
+ 	-DENABLE_UNSTABLE_API_ABI_HEADERS=ON	\
