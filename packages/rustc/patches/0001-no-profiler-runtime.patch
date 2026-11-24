@@ -1,0 +1,23 @@
+Description: build without the profiler runtime on amd64 (bootstrap)
+ rustc's profiler builtins link clang's libclang_rt.profile from libclang-rt-19-dev.
+ In Debian that package depends on libc6-i386 (glibc's 32-bit C library), which
+ cannot be installed beside Yohane's 64-bit-only libniji. Treat amd64 like the
+ architectures upstream Debian already builds without the profiler; with
+ drop-build-deps removing libclang-rt-19-dev. -C instrument-coverage and PGO
+ instrumentation are unavailable until the full pass restores it.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 05:28:50.100556370 +0000
++++ b/debian/rules	2026-11-24 05:28:50.101556350 +0000
+@@ -54,7 +54,9 @@
+ CLANG_RT_ARCH = armhf
+ endif
+ 
+-ifneq (,$(filter $(DEB_TARGET_ARCH),sparc64 mips64el hurd-i386 hurd-amd64))
++# Yohane (bootstrap): no profiler runtime on amd64 either. It links clang's libclang_rt.profile, and
++# Debian's libclang-rt-19-dev depends on the 32-bit glibc (libc6-i386), which Yohane doesn't have.
++ifneq (,$(filter $(DEB_TARGET_ARCH),sparc64 mips64el hurd-i386 hurd-amd64 amd64))
+ # sparc64: see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1061125
+ # mips64el: has profiler, but buggy atm (32-bit overflow in some counter?)
+ CLANG_RT_ARCH =

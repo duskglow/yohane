@@ -1,0 +1,19 @@
+Description: build only x86_64 on amd64, not the ia32 compat libraries
+ On amd64, gnu-efi also builds an ia32 copy into /usr/lib32 with gcc-multilib.
+ Yohane's C library (libniji) is 64-bit only, so there is no gcc-multilib, and
+ 32-bit UEFI is out of scope for now (Yohane decision 21). Build x86_64 only.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 05:28:50.094556486 +0000
++++ b/debian/rules	2026-11-24 05:28:50.094556486 +0000
+@@ -25,8 +25,7 @@
+ 	endif
+ else ifeq (amd64,$(DEB_BUILD_ARCH_CPU))
+ 	HOST_ARCH := x86_64
+-	COMPAT_ARCH := ia32
+-	COMPAT_APPEND := 32
++	# Yohane: no ia32 compat build (decision 21: UEFI-only for now, and no 32-bit C library)
+ else
+ 	# ARM CPUs
+ 	HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_GNU_CPU)
