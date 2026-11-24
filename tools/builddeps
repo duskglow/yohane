@@ -95,7 +95,9 @@ def main():
         with open(conf, "w") as f:
             f.write(f'Dir "{root}/";\nDir::State::status "{root}/var/lib/dpkg/status";\n'
                     'APT::Architecture "amd64";\nAPT::Architectures { "amd64"; };\n'
-                    'Acquire::Languages "none";\nDebug::NoLocking "true";\n')
+                    'Acquire::Languages "none";\nDebug::NoLocking "true";\n'
+                    # as sbuild resolves: a build environment never gets Recommends or Suggests
+                    'APT::Install-Recommends "false";\nAPT::Install-Suggests "false";\n')
         env = dict(os.environ, APT_CONFIG=conf)
         r = subprocess.run(["apt-get", "update", "-q", "--error-on=any"], env=env, capture_output=True, text=True)
         if r.returncode:
