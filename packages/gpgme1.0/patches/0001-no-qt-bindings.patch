@@ -1,0 +1,116 @@
+Description: build without the Qt bindings (qgpgme) during the bootstrap
+ Yohane's bootstrap builds gpgme without Qt 5 and Qt 6 (drop-build-deps), so
+ configure must not ask for the qt5 and qt6 languages, and the four Qt binding
+ packages (libqgpgme15t64, libqgpgmeqt6-15 and their -dev packages) are not built.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/control	2026-11-24 05:59:55.968459315 +0000
++++ b/debian/control	2026-11-24 05:59:55.968459315 +0000
+@@ -126,36 +126,6 @@
+  .
+  This is the official upstream Python 3 binding for GPGME.
+ 
+-Package: libqgpgme15t64
+-Provides:
+- ${t64:Provides},
+-Replaces:
+- libqgpgme15,
+-Breaks:
+- libqgpgme15 (<< ${source:Version}),
+-Architecture: any
+-Multi-Arch: same
+-Depends:
+- ${misc:Depends},
+- ${shlibs:Depends},
+-Description: library for GPGME integration with Qt
+- QGpgME is a library that provides GPGME integration with QEventLoop
+- and some Qt datatypes (e.g. QByteArray).
+- .
+- This is the official upstream Qt binding for GPGME.
+-
+-Package: libqgpgmeqt6-15
+-Architecture: any
+-Multi-Arch: same
+-Depends:
+- ${misc:Depends},
+- ${shlibs:Depends},
+-Description: library for GPGME integration with Qt 6
+- QGpgME is a library that provides GPGME integration with QEventLoop
+- and some Qt datatypes (e.g. QByteArray).
+- .
+- This is the official upstream Qt 6 binding for GPGME.
+-
+ Package: libgpgmepp6t64
+ Provides:
+  ${t64:Provides},
+@@ -191,58 +161,6 @@
+  This package contains the headers and other files needed to compile
+  against it.
+ 
+-Package: libqgpgme-dev
+-Section: libdevel
+-Architecture: any
+-Depends:
+- libgpgmepp-dev (= ${binary:Version}),
+- libqgpgme15t64 (= ${binary:Version}),
+- qtbase5-dev,
+- ${misc:Depends},
+-Conflicts:
+- libqgpgmeqt6-dev,
+-Breaks:
+- kdepimlibs5-dev,
+- libgpgmepp-dev (<< 1.23.2-1),
+-Replaces:
+- kdepimlibs5-dev,
+- libgpgmepp-dev (<< 1.23.2-1),
+- libqgpgmeqt6-dev,
+-Recommends:
+- libgpgmepp-doc (= ${binary:Version}),
+-Description: Qt bindings for GPGME (development files)
+- GpgME++ (aka GpgMEpp) is a C++ wrapper (or C++ bindings) for the
+- GnuPG project's GPGME (GnuPG Made Easy) library.
+- .
+- QGpgME is a library that provides GPGME integration with QEventLoop
+- and some Qt datatypes (e.g. QByteArray).
+- .
+- This package contains the headers and other files needed to compile
+- against this library.
+-
+-Package: libqgpgmeqt6-dev
+-Section: libdevel
+-Architecture: any
+-Conflicts:
+- libqgpgme-dev,
+-Replaces:
+- libqgpgme-dev,
+-Depends:
+- libgpgmepp-dev (= ${binary:Version}),
+- libqgpgmeqt6-15 (= ${binary:Version}),
+- ${misc:Depends},
+-Recommends:
+- libgpgmepp-doc (= ${binary:Version}),
+-Description: Qt 6 bindings for GPGME (development files)
+- GpgME++ (aka GpgMEpp) is a C++ wrapper (or C++ bindings) for the
+- GnuPG project's GPGME (GnuPG Made Easy) library.
+- .
+- QGpgME is a library that provides GPGME integration with QEventLoop
+- and some Qt datatypes (e.g. QByteArray).
+- .
+- This package contains the headers and other files needed to compile
+- against this library with Qt6.
+-
+ Package: libgpgmepp-doc
+ Section: doc
+ Architecture: all
+--- a/debian/rules	2026-11-24 05:59:55.968459315 +0000
++++ b/debian/rules	2026-11-24 05:59:55.968459315 +0000
+@@ -17,7 +17,7 @@
+ override_dh_auto_configure:
+ 	dh_auto_configure --builddirectory=build -- \
+ 	    --enable-static \
+-	    --enable-languages="python cpp qt5 qt6" \
++	    --enable-languages="python cpp" \
+ 	    --infodir=/usr/share/info
+ 
+ override_dh_missing:
