@@ -92,7 +92,10 @@ def main():
             f.write(f"deb-src [signed-by={ukr}] {debsec} trixie-security main\n")
         with open(os.path.join(root, "etc/apt/preferences.d/yohane-overlay"), "w") as f:
             f.write("Package: *\nPin: release o=Devuan\nPin-Priority: 600\n\n"
-                    "Package: *\nPin: release o=Debian\nPin-Priority: 500\n")
+                    "Package: *\nPin: release o=Debian\nPin-Priority: 500\n\n"
+                    # rustc-web is Debian's second Rust toolchain, kept for the browsers' security updates. It
+                    # satisfies cargo/rustc build dependencies and then conflicts with rustc; Yohane never builds it.
+                    "Package: src:rustc-web\nPin: version *\nPin-Priority: -1\n")
         conf = os.path.join(root, "apt.conf")
         with open(conf, "w") as f:
             f.write(f'Dir "{root}/";\nDir::State::status "{root}/var/lib/dpkg/status";\n'

@@ -78,7 +78,13 @@ Pin-Priority: 600
 
 Package: *
 Pin: release o=Debian
-Pin-Priority: 500"
+Pin-Priority: 500
+
+Package: src:rustc-web
+Pin: version *
+Pin-Priority: -1"
+  # rustc-web is Debian's second Rust toolchain (for the browsers' security updates). It satisfies rustc's and
+  # cargo's build dependencies and then conflicts with rustc, so building rustc fails to resolve; never use it.
   # The preferences must exist before mmdebstrap's first apt run, so a setup hook writes them.
   hooks=(--setup-hook="mkdir -p \"\$1/etc/apt/preferences.d\" && printf '%s\n' '$PREFS' > \"\$1/etc/apt/preferences.d/yohane-overlay\""
          "${hooks[@]}"
