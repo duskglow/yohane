@@ -1,19 +1,32 @@
-Description: disable the doc build under the profiles that drop xmlto
+Description: the doc build follows the profiles that drop xmlto
  debian/control drops xmlto and docbook-dsssl under pkg.opensp.bootstrap, but
- debian/rules only passes --disable-doc-build under stage1, so a build with
- pkg.opensp.bootstrap fails in configure. Disable the doc build under stage1,
- nodoc or pkg.opensp.bootstrap. A normal build is unchanged.
+ debian/rules tests only the stage1 profile, both for --disable-doc-build and
+ for the install step that fixes up the generated man pages. Treat stage1,
+ nodoc and pkg.opensp.bootstrap alike in both places, so the install step
+ creates the empty placeholder man pages Debian uses for stage1. A normal build
+ is unchanged.
 Author: Yohane Linux Maintainers <aqours@koiren.ai>
 Forwarded: not-needed
 
---- a/debian/rules	2026-11-24 09:19:35.657334205 +0000
-+++ b/debian/rules	2026-11-24 09:19:35.657334205 +0000
-@@ -46,7 +46,7 @@
+--- a/debian/rules	2026-11-24 09:23:39.129788452 +0000
++++ b/debian/rules	2026-11-24 09:23:39.129788452 +0000
+@@ -46,7 +46,9 @@
  	MAKEFLAGS += -j$(NUMJOBS)
  endif
  
 -ifeq (,$(findstring stage1,$(DEB_BUILD_PROFILES)))
-+ifeq (,$(filter stage1 nodoc pkg.opensp.bootstrap,$(DEB_BUILD_PROFILES)))
++# Yohane: the doc build is off under any profile that drops its build-deps
++yohane_nodocbuild := $(filter stage1 nodoc pkg.opensp.bootstrap,$(DEB_BUILD_PROFILES))
++ifeq (,$(yohane_nodocbuild))
  	enable_doc_build := --enable-full-doc-build
  else
  	enable_doc_build := --disable-doc-build
+@@ -137,7 +139,7 @@
+ 	( sed -e 's/unicode.sd/unicode.decl/' catalog > catalog.tmp && \
+ 	mv -f catalog.tmp catalog ) && \
+ 	chmod +x gensyntax.pl
+-ifeq (,$(findstring stage1,$(DEB_BUILD_PROFILES)))
++ifeq (,$(yohane_nodocbuild))
+ 	# Ugly fix for man page generation error
+ 	sed 's~\.HP.*\[\\fIsysid\\fR\.\.\.\]~[\\fIsysid\\fR...]~' $(DESTDIR)/usr/share/man/man1/onsgmls.1 > $(DESTDIR)/usr/share/man/man1/onsgmls.1.tmp && mv $(DESTDIR)/usr/share/man/man1/onsgmls.1.tmp $(DESTDIR)/usr/share/man/man1/onsgmls.1
+ 	mkdir -p $(DESTDIR)/usr/share/doc/OpenSP

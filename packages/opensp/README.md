@@ -22,3 +22,9 @@ Status: active
 
 **Change.** `patches/0001-doc-build-follows-bootstrap-profile.patch` disables the doc build under `stage1`, `nodoc` or
 `pkg.opensp.bootstrap`. A normal build is unchanged. Keep it while the trim is active; it is harmless after.
+
+## 0001 revised (2026-11-24)
+
+`debian/rules` tests the `stage1` profile a second time, in `install-stamp`, where it edits the generated `onsgmls.1`
+that the disabled doc build never made. 0001 now sets one variable from `stage1`, `nodoc` and `pkg.opensp.bootstrap`
+and uses it in both places, so the install step takes Debian's stage1 path (empty placeholder man pages).
