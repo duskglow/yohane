@@ -1,0 +1,19 @@
+Description: disable the doc build under the profiles that drop xmlto
+ debian/control drops xmlto and docbook-dsssl under pkg.opensp.bootstrap, but
+ debian/rules only passes --disable-doc-build under stage1, so a build with
+ pkg.opensp.bootstrap fails in configure. Disable the doc build under stage1,
+ nodoc or pkg.opensp.bootstrap. A normal build is unchanged.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 09:19:35.657334205 +0000
++++ b/debian/rules	2026-11-24 09:19:35.657334205 +0000
+@@ -46,7 +46,7 @@
+ 	MAKEFLAGS += -j$(NUMJOBS)
+ endif
+ 
+-ifeq (,$(findstring stage1,$(DEB_BUILD_PROFILES)))
++ifeq (,$(filter stage1 nodoc pkg.opensp.bootstrap,$(DEB_BUILD_PROFILES)))
+ 	enable_doc_build := --enable-full-doc-build
+ else
+ 	enable_doc_build := --disable-doc-build
