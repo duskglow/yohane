@@ -27,6 +27,11 @@ YOHANE_KEYRINGS.
 """
 import concurrent.futures, hashlib, os, re, subprocess, sys, tarfile, tempfile, threading, urllib.request
 
+# Sources whose binaries a Yohane build environment gets without rebuilding them: glibc (libniji provides
+# libc6, libc6-dev, libc-bin and the rest; decision 12) and the kernel and firmware sources (imported unchanged,
+# decision 1; the same rule as tools/tiers). Their binaries are imports; their sources never join the closure.
+NOT_REBUILT = re.compile(r"^(glibc|linux|linux-signed-amd64|firmware-.*)$")
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -245,6 +250,8 @@ def main():
                         if not elf:
                             noelf.add((n, v)); imports.add((n, v)); continue
                         s, sv, _, origin = bins[(n, v)][:4]
+                        if NOT_REBUILT.match(s):
+                            imports.add((n, v)); continue
                         if s not in have:
                             have[s] = sv; added[s] = (sv, origin); nxt.append(s)
                             why[s] = (src, n)   # first pulled in by building src, through binary n
