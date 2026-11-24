@@ -1,0 +1,17 @@
+Description: honour nodoc when renaming the man page
+ Under nodoc, dh_installman installs nothing, so renaming nc.1 to
+ nc_openbsd.1 fails. Rename it only when docs are built. update-alternatives
+ accepts missing slave targets, so postinst is unaffected. A normal build is
+ unchanged.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 09:15:50.212267344 +0000
++++ b/debian/rules	2026-11-24 09:15:50.212267344 +0000
+@@ -42,4 +42,6 @@
+ 	mv -T $(prefix)/usr/bin/nc $(prefix)/usr/bin/nc.openbsd
+ 
+ execute_after_dh_installman:
++ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS) $(DEB_BUILD_PROFILES)))
+ 	mv -T $(man1dir)/nc.1 $(man1dir)/nc_openbsd.1
++endif
