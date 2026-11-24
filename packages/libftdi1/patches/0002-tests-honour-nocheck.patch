@@ -1,0 +1,17 @@
+Description: build the unit tests only when tests run
+ debian/rules configures the main build with BUILD_TESTS=ON unconditionally,
+ so a nocheck build still needs Boost.Test. Follow DEB_BUILD_OPTIONS=nocheck.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 05:45:58.631256670 +0000
++++ b/debian/rules	2026-11-24 05:45:58.631256670 +0000
+@@ -11,7 +11,7 @@
+ 
+ override_dh_auto_configure-arch:
+ 	dh_auto_configure --builddirectory=build-main -- \
+-		-DBUILD_TESTS=ON \
++		-DBUILD_TESTS=$(if $(filter nocheck,$(DEB_BUILD_OPTIONS)),OFF,ON) \
+ 		-DDOCUMENTATION:BOOL=OFF \
+ 		-DEXAMPLES:BOOL=OFF \
+ 		-DFTDIPP:BOOL=ON \
