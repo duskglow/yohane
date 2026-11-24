@@ -13,3 +13,5 @@ Status: active
 **How:** `drop-build-deps` lists `docbook-utils`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
 
 **Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.
+
+**Patch (2026-11-24):** `patches/0001-honour-nodoc.patch` skips the two `docbook2html` calls under nodoc. Without it, dropping `docbook-utils` made the build fail (`docbook2html: No such file or directory`). The patch is permanent-worthy: Debian's rules simply ignore nodoc here.

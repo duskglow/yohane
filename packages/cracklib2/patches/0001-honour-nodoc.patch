@@ -1,0 +1,20 @@
+Description: honour nodoc for the HTML manuals
+ debian/rules runs docbook2html unconditionally, so a nodoc build still needs
+ docbook-utils (and through it a TeX-based documentation toolchain). Skip the two
+ HTML manuals under nodoc; dh_installdocs already skips them then.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 05:30:09.179055825 +0000
++++ b/debian/rules	2026-11-24 05:30:09.180055807 +0000
+@@ -66,8 +66,10 @@
+ 		CFLAGS="-I$(CURDIR)/lib $(CFLAGS)" LDFLAGS="$(LDFLAGS)" CPPFLAGS="$(CPPFLAGS)" python$$i setup.py build ; \
+ 	done
+ endif
++ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS) $(DEB_BUILD_PROFILES)))
+ 	docbook2html -o debian/doc --nochunks debian/libcrack2.xml
+ 	docbook2html -o debian/doc --nochunks debian/cracklib-runtime.xml
++endif
+ 
+ override_dh_auto_test:
+ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
