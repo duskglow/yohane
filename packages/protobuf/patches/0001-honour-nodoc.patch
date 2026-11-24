@@ -1,0 +1,22 @@
+Description: honour nodoc in override_dh_installdocs-arch
+ Under nodoc, dh_installexamples and dh_installdocs install nothing, and the
+ commands that post-process the installed files then fail on paths that
+ don't exist. Run them only when docs are built. A normal build is unchanged.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 06:51:03.644616189 +0000
++++ b/debian/rules	2026-11-24 06:51:03.644616189 +0000
+@@ -167,10 +167,12 @@
+ 
+ override_dh_installdocs-arch:
+ 	dh_installdocs --arch
++ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS) $(DEB_BUILD_PROFILES)))
+ 	# Fix permission
+ 	chmod a-x $(CURDIR)/debian/protobuf-compiler/usr/share/doc/protobuf-compiler/examples/README.md
+ 	# Remove extra .gitignore
+ 	rm $(CURDIR)/debian/protobuf-compiler/usr/share/doc/protobuf-compiler/examples/.gitignore
++endif
+ 
+ override_dh_installdocs-indep:
+ 	dh_installdocs --indep

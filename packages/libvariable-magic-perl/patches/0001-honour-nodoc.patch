@@ -1,0 +1,17 @@
+Description: honour nodoc in override_dh_installexamples
+ Under nodoc, dh_installexamples and dh_installdocs install nothing, and the
+ commands that post-process the installed files then fail on paths that
+ don't exist. Run them only when docs are built. A normal build is unchanged.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 06:48:20.727473946 +0000
++++ b/debian/rules	2026-11-24 06:48:20.727473946 +0000
+@@ -9,5 +9,7 @@
+ 
+ override_dh_installexamples:
+ 	dh_installexamples
++ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS) $(DEB_BUILD_PROFILES)))
+ 	find $(CURDIR)/debian/$(PKG)/usr/share/doc/$(PKG)/examples -type f \
+ 		-exec sed -i -e 's;^#.*perl;#!/usr/bin/perl;' {} +
++endif
