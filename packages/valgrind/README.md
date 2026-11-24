@@ -28,3 +28,10 @@ source-highlight, Boost (with Boost.MPI), numpy and lapack: 9 sources in all.
 
 **Change.** `drop-build-deps` lists `gdb`; `patches/0001-gdb-path-without-gdb.patch` passes `GDB=/usr/bin/gdb` to
 configure so the recorded path stays right. T2 went from 268 to 259 sources.
+
+## 0002: no valgrind-mpi (2026-11-24)
+
+**Problem.** The trim drops `mpi-default-dev`, so `libmpiwrap` is not built and `valgrind-mpi.install` found nothing.
+
+**Change.** `patches/0002-no-valgrind-mpi.patch` removes the `valgrind-mpi` package from `debian/control`.
+**Restore** together with the MPI trim: delete both.

@@ -1,0 +1,28 @@
+Description: no valgrind-mpi while MPI is trimmed
+ Yohane's bootstrap drops mpi-default-dev from the build dependencies
+ (packages/valgrind/drop-build-deps), so libmpiwrap is not built and
+ valgrind-mpi would be empty. Drop the package; the rules already keep
+ libmpiwrap out of valgrind.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/control	2026-11-24 09:40:15.775320471 +0000
++++ b/debian/control	2026-11-24 09:40:15.775320471 +0000
+@@ -42,17 +42,3 @@
+   * a stack/global array overrun detector (SGCheck)
+   * a second heap profiler that examines how heap blocks are used (DHAT)
+   * a SimPoint basic block vector generator (BBV)
+-
+-Package: valgrind-mpi
+-Architecture: amd64 arm64 armhf i386 mips mipsel mips64 mips64el powerpc ppc64 ppc64el s390x
+-Depends: ${misc:Depends}, ${shlibs:Depends}, valgrind (= ${binary:Version})
+-Recommends: gdb
+-Description: instrumentation framework for building dynamic analysis tools (MPI module)
+- Valgrind is a system for debugging and profiling Linux programs. With its tool
+- suite you can automatically detect many memory management and threading bugs,
+- avoiding hours of frustrating bug-hunting and making your programs more stable.
+- You can also perform detailed profiling to help speed up your programs and use
+- Valgrind to build new tools.
+- .
+- This package provides the "mpiwrap" library for debugging distributed-memory
+- applications which use the MPI message passing standard.
