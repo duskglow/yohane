@@ -2,14 +2,15 @@ Description: drop the JNI entry points from the symbols file while Java is off
  With the Java bindings switched off (0001), libturbojpeg.so no longer exports
  its 31 Java_org_libjpegturbo_* JNI functions. debian/rules sets
  DPKG_GENSYMBOLS_CHECK_LEVEL=4, which fails on any change, even optional symbols
- disappearing, so remove them from the symbols file. Only libturbojpeg-java
- calls them.
+ disappearing, so remove them from the symbols file, with the TURBOJPEG_1.3
+ version node, which holds only JNI functions. Only libturbojpeg-java calls
+ them.
 Author: Yohane Linux Maintainers <aqours@koiren.ai>
 Forwarded: not-needed
 
---- a/debian/libturbojpeg0.symbols	2026-11-24 06:43:04.269045223 +0000
-+++ b/debian/libturbojpeg0.symbols	2026-11-24 06:43:04.269045223 +0000
-@@ -1,36 +1,5 @@
+--- a/debian/libturbojpeg0.symbols	2026-11-24 06:46:54.520452488 +0000
++++ b/debian/libturbojpeg0.symbols	2026-11-24 06:46:54.521452477 +0000
+@@ -1,42 +1,10 @@
  libturbojpeg.so.0 libturbojpeg0 #MINVER#
  * Build-Depends-Package: libturbojpeg0-dev
 - (arch=!hppa !hurd-any !powerpc)Java_org_libjpegturbo_turbojpeg_TJCompressor_compressFromYUV___3_3B_3II_3III_3BII@TURBOJPEG_1.4 1:2.0.6
@@ -46,3 +47,9 @@ Forwarded: not-needed
   TJBUFSIZE@TURBOJPEG_1.0 1.2.90
   TJBUFSIZEYUV@TURBOJPEG_1.1 1.2.90
   TURBOJPEG_1.0@TURBOJPEG_1.0 1.2.90
+  TURBOJPEG_1.1@TURBOJPEG_1.1 1.2.90
+  TURBOJPEG_1.2@TURBOJPEG_1.2 1.2.90
+- (arch=!hppa !hurd-any !powerpc)TURBOJPEG_1.3@TURBOJPEG_1.3 1:2.0.6
+  TURBOJPEG_1.4@TURBOJPEG_1.4 1:1.4.0
+  TURBOJPEG_2.0@TURBOJPEG_2.0 1:2.0.2
+  tjAlloc@TURBOJPEG_1.2 1.2.90

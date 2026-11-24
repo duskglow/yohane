@@ -35,3 +35,7 @@ disappearing included. `patches/0002-no-jni-symbols.patch` replaces it and remov
 file. **This is an ABI difference from Debian's
 libturbojpeg0:** a Java program using Debian's libturbojpeg-java would not find those functions in this build. Nothing
 in Yohane uses them; restore with the rest of this trim.
+
+**0002 revised again (2026-11-24):** the `TURBOJPEG_1.3` version node contains only JNI functions, so it disappears
+with them too; 0002 now removes that line as well. So this build lacks the `TURBOJPEG_1.3` version node as well as
+the 31 JNI functions.
