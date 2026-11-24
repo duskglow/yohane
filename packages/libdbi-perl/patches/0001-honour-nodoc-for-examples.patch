@@ -1,0 +1,17 @@
+Description: honour nodoc when fixing the examples' interpreter lines
+ Under nodoc, dh_installexamples installs nothing, and the two sed commands that
+ fix the examples' #! lines then fail on a glob that matches no file. Run them
+ only when examples are installed.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 06:17:10.665185340 +0000
++++ b/debian/rules	2026-11-24 06:17:10.665185340 +0000
+@@ -40,5 +40,7 @@
+ 
+ override_dh_installexamples:
+ 	dh_installexamples
++ifeq (,$(filter nodoc,$(DEB_BUILD_OPTIONS) $(DEB_BUILD_PROFILES)))
+ 	sed -i '1s|^#!perl|#!/usr/bin/perl|' $(TMP)/usr/share/doc/$(PACKAGE)/examples/*
+ 	sed -i '1s|^#!/usr/local/bin/perl|#!/usr/bin/perl|' $(TMP)/usr/share/doc/$(PACKAGE)/examples/*
++endif
