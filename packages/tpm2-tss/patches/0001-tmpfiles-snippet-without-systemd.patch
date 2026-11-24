@@ -1,0 +1,20 @@
+Description: ship the FAPI tmpfiles.d snippet without systemd-tmpfiles
+ configure installs tpm2-tss-fapi.conf only when it finds systemd-tmpfiles on
+ the build host, but libtss2-fapi1t64.install always names it, so the build
+ fails on a host without systemd. Tell configure the tool is there: the
+ snippet is then built and installed, and with DESTDIR set the install hook
+ makes the FAPI directories itself, as it does on Debian.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 09:41:08.444628778 +0000
++++ b/debian/rules	2026-11-24 09:41:08.444628778 +0000
+@@ -11,7 +11,7 @@
+ 	dh_autoreconf ./bootstrap
+ 
+ override_dh_auto_configure:
+-	dh_auto_configure -- --enable-unit --enable-doxygen-doc
++	dh_auto_configure -- --enable-unit --enable-doxygen-doc ac_cv_prog_systemd_tmpfiles=yes
+ 
+ override_dh_autoreconf_clean:
+ 	rm -f compile depcomp ltmain.sh config.sub missing config.guess \
