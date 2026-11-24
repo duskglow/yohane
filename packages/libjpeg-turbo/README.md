@@ -13,3 +13,12 @@ Status: active
 **How:** `drop-build-deps` lists `default-jdk`, `javahelper`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
 
 **Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.
+
+## 0001: rules without Java (2026-11-24)
+
+**Problem.** Dropping `default-jdk` and `javahelper` wasn't enough: `debian/rules` runs `dh $@ --with javahelper` and
+configures `WITH_JAVA=1` on amd64, so the build failed at its first step ("unable to load addon javahelper").
+
+**Change.** `patches/0001-no-java-bindings.patch` empties `JAVA_ARCHS` (so `WITH_JAVA=0`) and drops the javahelper
+add-on. `libturbojpeg-java` is `Architecture: all`, so an arch-only build never built it anyway. Restore together
+with the drop-build-deps lines.

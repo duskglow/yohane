@@ -1,0 +1,29 @@
+Description: build without the Java bindings during the bootstrap
+ Yohane's bootstrap drops default-jdk and javahelper from the build
+ dependencies, so the rules must neither configure WITH_JAVA=1 nor load dh's
+ javahelper add-on. libturbojpeg-java is Architecture: all and not built in an
+ arch-only build anyway.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/rules	2026-11-24 06:27:15.312152079 +0000
++++ b/debian/rules	2026-11-24 06:27:15.312152079 +0000
+@@ -43,7 +43,8 @@
+   DISABLE_SIMD=-DWITH_SIMD=0
+ endif
+ 
+-JAVA_ARCHS = alpha amd64 arm64 armel armhf i386 ia64 loong64 m68k mips64el ppc64 ppc64el riscv64 s390x sh4 sparc64 x32
++# Yohane (bootstrap): no Java bindings, so no JDK and no javahelper (drop-build-deps).
++JAVA_ARCHS =
+ 
+ ifneq (,$(filter $(DEB_HOST_ARCH), $(JAVA_ARCHS)))
+   DISABLE_JAVA=-DWITH_JAVA=1
+@@ -52,7 +53,7 @@
+ endif
+ 
+ %:
+-	dh $@ --with javahelper
++	dh $@
+ 
+ override_dh_auto_configure:
+ 	dh_auto_configure -- $(DISABLE_SIMD) $(FLOATTEST) $(DISABLE_JAVA) \
