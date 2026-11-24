@@ -1,0 +1,19 @@
+Description: python3-setuptools is a build dependency, not a test-only one
+ debian/control marks python3-setuptools <!nocheck>, but setup.py imports
+ setuptools (falling back to distutils, which Python 3.12 removed) for every
+ step, even "setup.py clean". So a nocheck build fails at its first step with
+ "No module named 'setuptools'". Drop the <!nocheck> restriction.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+
+--- a/debian/control	2026-11-24 05:34:26.896577695 +0000
++++ b/debian/control	2026-11-24 05:34:26.896577695 +0000
+@@ -10,7 +10,7 @@
+                help2man,
+                python3-all-dev,
+                python3-numpy <!nocheck>,
+-               python3-setuptools <!nocheck>,
++               python3-setuptools,
+ Build-Depends-Indep: dh-sequence-sphinxdoc,
+                      python3-sphinx,
+                      python3-sphinx-issues,
