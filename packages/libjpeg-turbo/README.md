@@ -28,3 +28,10 @@ with the drop-build-deps lines.
 `patches/0002-jni-symbols-optional.patch` marks them optional. **This is an ABI difference from Debian's
 libturbojpeg0:** a Java program using Debian's libturbojpeg-java would not find those functions in this build. Nothing
 in Yohane uses them; restore with the rest of this trim.
+
+**0002 revised (2026-11-24): JNI symbols removed, not optional.** Marking them optional (the first 0002) wasn't
+enough: `debian/rules` sets `DPKG_GENSYMBOLS_CHECK_LEVEL = 4`, which fails on any change, optional symbols
+disappearing included. `patches/0002-no-jni-symbols.patch` replaces it and removes the 31 lines from the symbols
+file. **This is an ABI difference from Debian's
+libturbojpeg0:** a Java program using Debian's libturbojpeg-java would not find those functions in this build. Nothing
+in Yohane uses them; restore with the rest of this trim.
