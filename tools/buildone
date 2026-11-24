@@ -67,12 +67,16 @@ case "$STAGE" in
 esac
 
 # Yohane patches: packages/<source>/patches/*.patch from the Yohane repository,
-# applied in name order to the verified Devuan source. The result is rebuilt as
-# a new source package with version <version>yohane<N> (N from
-# packages/<source>/revision, default 1), and that is what sbuild builds.
+# applied in name order to the verified Devuan source, then the build dependencies
+# listed in packages/<source>/drop-build-deps removed from debian/control by
+# tools/trimcontrol (decisions 16 and 24; the same rule tools/builddeps resolves
+# with). The result is rebuilt as a new source package with version
+# <version>yohane<N> (N from packages/<source>/revision, default 1), and that is
+# what sbuild builds.
 target="${SRC}_${VER}"
 pkgdir="${YOHANE_PACKAGES:-}/$SRC"
-if [ "$patches" = yes ] && [ -n "${YOHANE_PACKAGES:-}" ] && ls "$pkgdir"/patches/*.patch >/dev/null 2>&1; then
+if [ "$patches" = yes ] && [ -n "${YOHANE_PACKAGES:-}" ] \
+   && { ls "$pkgdir"/patches/*.patch >/dev/null 2>&1 || [ -s "$pkgdir/drop-build-deps" ]; }; then
   prep="$logdir/${SRC}_${VER}.prep.log"
   rev=$(cat "$pkgdir/revision" 2>/dev/null || echo 1)
   newver="${VER}yohane${rev}"
@@ -82,13 +86,21 @@ if [ "$patches" = yes ] && [ -n "${YOHANE_PACKAGES:-}" ] && ls "$pkgdir"/patches
     dsc=$(python3 -I "$HOME/aqours/tools/getsource" "$SRC" "$VER" "$work/src")
     cd "$work/src"
     dpkg-source --no-check -x "$dsc" tree      # the .dsc's files were verified by getsource
+    what=""
     for p in "$pkgdir"/patches/*.patch; do
+      [ -e "$p" ] || continue
       echo "== apply $(basename "$p")"
       patch -p1 -d tree --no-backup-if-mismatch < "$p"
+      what="$what $(basename "$p")"
     done
+    if [ -s "$pkgdir/drop-build-deps" ]; then
+      echo "== trim build dependencies: $(tr -s ' \n' ' ' < "$pkgdir/drop-build-deps")"
+      python3 -I "$HOME/aqours/tools/trimcontrol" tree/debian/control "$pkgdir/drop-build-deps"
+      what="$what drop-build-deps($(tr -s ' \n' ' ' < "$pkgdir/drop-build-deps" | sed 's/ $//'))"
+    fi
     (cd tree && DEBEMAIL="aqours@koiren.ai" DEBFULLNAME="Yohane Linux Maintainers" \
       dch --newversion "$newver" --distribution excalibur --force-distribution \
-          "Yohane: apply packages/$SRC patches: $(cd "$pkgdir/patches" && ls *.patch | tr '\n' ' ')")
+          "Yohane: apply packages/$SRC:$what")
     dpkg-source --auto-commit -b tree
   ) > "$prep" 2>&1
   prc=$?

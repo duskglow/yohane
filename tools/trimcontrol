@@ -1,0 +1,67 @@
+#!/usr/bin/python3 -I
+"""trimcontrol: remove build dependencies from a source tree's debian/control (decisions 16 and 24).
+
+    tools/trimcontrol debian/control DROP-FILE
+
+DROP-FILE is packages/<source>/drop-build-deps: package names, whitespace-separated. In the source paragraph's
+Build-Depends, Build-Depends-Arch and Build-Depends-Indep, every alternative naming one of them is removed, and a
+group that loses all its alternatives is removed. This is the same rule tools/builddeps uses to resolve the trimmed
+closure, so what is built matches what was computed. Fails if a listed name matches nothing (a stale list should be
+noticed, not silently ignored). Prints what it removed.
+"""
+import re, sys
+
+FIELDS = ("Build-Depends", "Build-Depends-Arch", "Build-Depends-Indep")
+
+
+def main():
+    path, dropfile = sys.argv[1], sys.argv[2]
+    drop = set(open(dropfile).read().split())
+    text = open(path, encoding="utf-8").read()
+    paras = re.split(r"\n\s*\n", text.strip("\n"), maxsplit=1)
+    src, rest = paras[0], (paras[1] if len(paras) > 1 else "")
+    lines = src.split("\n")
+    out, i, used, removed = [], 0, set(), []
+    while i < len(lines):
+        line = lines[i]
+        m = re.match(r"^([A-Za-z0-9-]+):(.*)$", line)
+        if m and m.group(1) in FIELDS:
+            name, value = m.group(1), m.group(2)
+            start_i = i
+            i += 1
+            while i < len(lines) and lines[i][:1] in (" ", "\t"):
+                value += "\n" + lines[i]; i += 1
+            n_before = len(removed)
+            # drop comment lines inside the field (debhelper allows them), then split groups
+            value = "\n".join(l for l in value.split("\n") if not l.strip().startswith("#"))
+            groups = []
+            for g in re.sub(r"\s+", " ", value).split(","):
+                alts = [a.strip() for a in g.split("|") if a.strip()]
+                keep = []
+                for a in alts:
+                    pkg = re.split(r"[\s(\[<:]", a, 1)[0]
+                    if pkg in drop:
+                        used.add(pkg); removed.append(f"{name}: {a}")
+                    else:
+                        keep.append(a)
+                if keep:
+                    groups.append(" | ".join(keep))
+            if len(removed) == n_before:
+                out.extend(lines[start_i:i])            # untouched field: keep it exactly as it was
+            elif groups:
+                out.append(f"{name}:\n " + ",\n ".join(groups) + ",")
+            continue
+        out.append(line); i += 1
+    unused = drop - used
+    if unused:
+        sys.exit(f"trimcontrol: {', '.join(sorted(unused))} not found in {path}'s build dependencies")
+    new = "\n".join(out) + ("\n\n" + rest if rest else "\n")
+    if not new.endswith("\n"):
+        new += "\n"
+    open(path, "w", encoding="utf-8").write(new)
+    for r in removed:
+        print("removed " + r)
+
+
+if __name__ == "__main__":
+    main()
