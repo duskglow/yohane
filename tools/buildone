@@ -75,6 +75,15 @@ case "$STAGE" in
 esac
 # The stages that build what may be published: tests on (nocheck for T2), retry without tests, gate, staging.
 case "$STAGE" in stage1|stage2|stage3) bootstrap_stage=yes;; *) bootstrap_stage=no;; esac
+# Yohane versions its own builds from stage 2 on (decision 26; design section 3): binNMU style, the source
+# unchanged and "+yohane1" appended to every binary's version. Stages 2 and 3 use the same suffix and the same
+# fixed changelog timestamp (it becomes SOURCE_DATE_EPOCH), so their outputs can be compared byte for byte.
+case "$STAGE" in
+  stage2|stage3)
+    opts+=(--append-to-version="${YOHANE_VERSION_SUFFIX:-+yohane1}"
+           --binNMU-timestamp="${YOHANE_BINNMU_TIMESTAMP:-1795564800}"   # 2026-11-25 00:00:00 UTC
+           --maintainer="Yohane Linux Maintainers <aqours@koiren.ai>");;
+esac
 
 # Yohane patches: packages/<source>/patches/*.patch from the Yohane repository,
 # applied in name order to the verified Devuan source, then the build dependencies
