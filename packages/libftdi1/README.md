@@ -24,3 +24,7 @@ binding (libftdipp1) is unchanged.
 Neither is in Yohane's build set: Boost.Test is for the test suite (libftdi1 is built without tests, T2), and libconfuse is only for the ftdi_eeprom tool.
 
 Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.
+
+**Patch `0003-no-ftdi-eeprom.patch` (2026-11-25):** the drop list removes `libconfuse-dev`, which only the `ftdi_eeprom`
+tool needs, but the rules still configured it (`-DFTDI_EEPROM:BOOL=ON`) and CMake stopped ("Could NOT find
+Confuse"). The patch turns it off and removes the `ftdi-eeprom` package; the libraries are unchanged.
