@@ -1,0 +1,30 @@
+diff -ruN a/debian/control b/debian/control
+--- a/debian/control	2026-09-17 17:17:17.000000000 +0000
++++ b/debian/control	2026-11-25 10:15:54.843714598 +0000
+@@ -839,26 +839,6 @@
+  other interesting features.
+  This package contains the Connect plugin for MariaDB server.
+ 
+-Package: mariadb-plugin-connect-jdbc
+-Architecture: all
+-Depends:
+- default-jre-headless,
+- ${misc:Depends},
+-Suggests:
+- libcsvjdbc-java,
+- libmariadb-java,
+- libpostgis-java,
+- libpostgresql-jdbc-java,
+- libxerial-sqlite-jdbc-java,
+-Enhances:
+- mariadb-plugin-connect,
+-Description: Connect storage engine JDBC interface for MariaDB server
+- To connect to remote DBMS using Connect Storage Engine (SE) and JDBC driver,
+- there is need for JDBC interface byte code.
+- The JDBC driver for the remote DBMS connection is required.
+- This package contains the Connect SE plugin JDBC interface file for MariaDB
+- server.
+-
+ Package: mariadb-plugin-s3
+ Architecture: any
+ Depends:

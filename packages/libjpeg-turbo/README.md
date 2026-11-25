@@ -39,3 +39,7 @@ in Yohane uses them; restore with the rest of this trim.
 **0002 revised again (2026-11-24):** the `TURBOJPEG_1.3` version node contains only JNI functions, so it disappears
 with them too; 0002 now removes that line as well. So this build lacks the `TURBOJPEG_1.3` version node as well as
 the 31 JNI functions.
+
+**Patch `0003-no-java-package.patch`:** removes the arch:all `libturbojpeg-java` package from `debian/control`. 0001 stops
+the Java bindings from being built, but the package stayed, and the indep build failed in dh_install
+(`usr/share/java` missing). With it gone, libjpeg-turbo has no arch:all packages.

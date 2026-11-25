@@ -1,0 +1,8 @@
+diff -ruN a/debian/not-installed b/debian/not-installed
+--- a/debian/not-installed	2025-04-10 15:06:25.000000000 +0000
++++ b/debian/not-installed	2026-11-25 10:15:54.906713819 +0000
+@@ -36,3 +36,4 @@
+ etc/apparmor.d/usr.lib.apache2.mpm-prefork.apache2
+ etc/apparmor.d/usr.sbin.winbindd
+ usr/share/apparmor/extra-profiles/chromium_browser
++etc/apparmor.d/usr.sbin.apache2

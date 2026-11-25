@@ -29,3 +29,7 @@ installed mod_apparmor, so the build stopped at "unable to load addon apache2" (
 built apparmor unpatched). The patch drops the sequence, the mod_apparmor install and the dh_apache2 override
 from debian/rules, and the libapache2-mod-apparmor package from debian/control. apparmor stays in the set for
 dh-apparmor (bind9, cups, man-db, unbound) and libapparmor (dbus, systemd).
+
+**Patch `0002-apache2-profile-not-installed.patch`:** lists `etc/apparmor.d/usr.sbin.apache2` in `debian/not-installed`.
+The upstream build still installs that profile, and with `libapache2-mod-apparmor` gone (0001) nothing ships it, so
+dh_missing failed.

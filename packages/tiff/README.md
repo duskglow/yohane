@@ -25,3 +25,7 @@ build dependency, but `libtiff-dev.install` and `libtiff-tools.install` name `us
 
 **Change.** `patches/0002-nodoc-empty-man-dirs.patch` creates the two empty directories before `dh_install` under
 nodoc. A normal build is unchanged.
+
+**Patch `0003-libtiff-doc-nodoc.patch`:** marks `libtiff-doc` `Build-Profiles: <!nodoc>`. Under nodoc the manual isn't
+built, and the indep build failed in dh_install (`usr/share/doc/libtiff-doc/manual/` missing). With nodoc, tiff has
+no arch:all packages to build.

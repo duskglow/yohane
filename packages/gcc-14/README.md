@@ -41,3 +41,7 @@ and disables what needs them.
 Yohane is amd64-only: libniji has no 32-bit or x32 libc, so gcc-14 is built without biarch (stage 1's build already produced no lib32/libx32 packages). locales-all comes from glibc, which Yohane does not build; libniji provides no locales-all.
 
 Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.
+
+**Correction (2026-11-25):** the six multilib names above were taken from Devuan's .dsc. `0001-no-multilib.patch`
+already removes them from `debian/control`, so trimcontrol found nothing to drop and failed. `drop-build-deps` now
+lists only `locales-all` from this section.
