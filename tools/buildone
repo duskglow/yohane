@@ -141,7 +141,8 @@ export DEB_BUILD_OPTIONS="parallel=$jobs $dbo"
 # nodoc for every stage 1 build and nocheck for sources listed in $YOHANE_NOCHECK_LIST
 # (T2, the packages needed only to build others). The pure stage 0 baseline uses none.
 profiles=""
-[ "$patches" = yes ] && [ -s "$pkgdir/build-profiles" ] && profiles=$(tr -s ' \n' ' ' < "$pkgdir/build-profiles")
+# (Carriage returns are dropped: a CRLF file once made every profile name end in \r, and sbuild matched none.)
+[ "$patches" = yes ] && [ -s "$pkgdir/build-profiles" ] && profiles=$(tr -d '\r' < "$pkgdir/build-profiles" | tr -s ' \n' ' ')
 if [ "$bootstrap_stage" = yes ] || [ "$STAGE" = stage1u ]; then
   profiles="$profiles nodoc"
   [ -n "${YOHANE_NOCHECK_LIST:-}" ] && grep -qx "$SRC" "$YOHANE_NOCHECK_LIST" 2>/dev/null && profiles="$profiles nocheck"

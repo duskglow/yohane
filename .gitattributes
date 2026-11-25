@@ -1,0 +1,3 @@
+# Yohane tools read these files with shell and Python; keep them LF-only whatever the checkout platform.
+* text=auto eol=lf
+*.patch -text
