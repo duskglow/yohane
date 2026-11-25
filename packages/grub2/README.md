@@ -26,11 +26,12 @@ possible to give gcc just enough 32-bit support for GRUB. To be investigated.
 
 ## Bootstrap trims (planned, decision 16)
 
-**Bootstrap only (decision 16).** During the bootstrap, Yohane builds grub2 without grub-emu's SDL display, the qemu-based tests, grub-mount (FUSE) and grub-mkrescue's ISO support (pulls qemu, SDL, PulseAudio and LLVM 22).
+**Bootstrap only (decision 16).** During the bootstrap, Yohane builds grub2 without grub-emu's SDL display, the qemu-based tests and grub-mkrescue's ISO support (pulls qemu, SDL, PulseAudio and LLVM 22).
 This keeps large build-dependency chains out of the minimal bootstrap set (they were found with
 `tools/builddeps`' chain report, `T2.why`).
 
-**How:** a patch removes `libsdl2-dev`, `qemu-system`, `libfuse3-dev`, `xorriso` from `debian/control` and disables what needs them.
+**How:** a patch removes `libsdl2-dev`, `qemu-system`, `xorriso` from `debian/control` and disables what needs them.
+n**Not dropped: `libfuse3-dev`.** It was in the first list, but no patch removed grub-mount from grub-common, so the build failed in stage 2 (dh_install: usr/bin/grub-mount missing). fuse3 is built by Yohane and pulls none of the large chains, so it stays.
 
 **Restored in the full pass,** once the system rebuilds itself; Snow Halation ships the full-featured build.
 
