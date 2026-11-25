@@ -9,7 +9,7 @@
 
 Settings come from ~/aqours/driver.conf (JSON):
   {"db": ".../yohane.db", "events": ".../events.log",
-   "hosts": {"hostA": {"ssh": "user@hostA", "max": 4}, ...},
+   "hosts": {"hostA": {"ssh": "user@hostA", "max": 4}, "hostB": {..., "stages": ["stage2"]}, ...},
    "publish": {"stage1": "bootstrap"}, "incoming": "...", "reprepro": "...", "gnupghome": "..."}
 A stage listed under "publish" has its successful builds (status ok, or oknc:
 built but its tests failed) included into that suite from the incoming
@@ -214,7 +214,9 @@ def stop_requested(stage):
 
 
 def run(stage):
-    c = conf(); hosts = c["hosts"]
+    c = conf()
+    # A host with "stages": [...] only takes builds of those stages (it may have no root for the others).
+    hosts = {h: v for h, v in c["hosts"].items() if stage in v.get("stages", [stage])}
     lock = threading.Lock()
     stop = threading.Event()
     outstanding = {h: 0 for h in hosts}
