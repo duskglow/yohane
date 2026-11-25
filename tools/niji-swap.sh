@@ -60,9 +60,17 @@ log "headers: yohane-glibc-headers ${gv}+yohane.stage1, $(wc -l < hd/keep.list) 
 
 # 2. swap: libniji's three packages, each named exactly, then verified
 (cd swap && apt-get download -qq "libc6=$LV" "libc-bin=$LV" "libc-dev-bin=$LV" "libc6-dev=$LV")
-dpkg -i --force-depends --force-overwrite yohane-glibc-headers.deb \
+# libniji's libc6-dev ships libniji's own headers (from snapshot 2026-11-24.2). Stage 1 compiles against glibc's
+# headers throughout (decision 10), so yohane-glibc-headers is installed after it, in a second dpkg run, and its files
+# replace libniji's wherever both ship one. (Installed in one run, libniji's were unpacked last and won, leaving a mix.)
+dpkg -i --force-depends --force-overwrite \
   "swap/libc6_${LV}_amd64.deb" "swap/libc-bin_${LV}_amd64.deb" "swap/libc-dev-bin_${LV}_amd64.deb" "swap/libc6-dev_${LV}_amd64.deb" >/dev/null 2>dpkg.err \
   || { cat dpkg.err; exit 1; }
+dpkg -i --force-depends --force-overwrite yohane-glibc-headers.deb >/dev/null 2>>dpkg.err || { cat dpkg.err; exit 1; }
+# Check: a header both ship must now be glibc's.
+owner=$(dpkg -S /usr/include/signal.h 2>/dev/null | cut -d: -f1)
+[ "$owner" = yohane-glibc-headers ] || { log "SWAP FAILED: /usr/include/signal.h belongs to '$owner', not yohane-glibc-headers"; exit 1; }
+log "headers: glibc's win where both ship one ($(grep -c . /var/lib/dpkg/info/yohane-glibc-headers.list) files from yohane-glibc-headers)"
 for pv in "libc6 $LV" "libc-bin $LV" "libc-dev-bin $LV" "libc6-dev $LV" "yohane-glibc-headers ${gv}+yohane.stage1"; do
   set -- $pv
   got=$(dpkg-query -W -f='${Version}' "$1" 2>/dev/null || echo none)
