@@ -36,3 +36,7 @@ expected to skip themselves when `-m32` doesn't work; stage 1's test results con
 Its tests build 32-bit binaries with gcc-multilib. Yohane is amd64-only: libniji has no 32-bit libc, so there is no multilib to test against.
 
 Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.
+
+**Correction (2026-11-25):** the stage 2 drop above was taken from Devuan's .dsc. `0002-no-gcc-multilib.patch`
+already removes `gcc-multilib` from `debian/control`, so trimcontrol found nothing to drop and failed. The
+`drop-build-deps` file is removed.
