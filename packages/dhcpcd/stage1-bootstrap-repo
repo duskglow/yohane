@@ -1,1 +1,2 @@
-Add Yohane bootstrap suite to the stage 1 build (systemd). See README.md.
+# Binary packages this source's stage 1 build takes from Yohane's bootstrap suite (tools/buildone; see README.md).
+systemd-timesyncd systemd libsystemd-shared libsystemd0

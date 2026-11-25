@@ -13,6 +13,8 @@ root holds only stage 1 output, and other sources need e2fsprogs' libraries at b
 `comerr-dev`, for krb5 and others). Yohane's own stage 1 systemd is in the bootstrap suite.
 
 **How:** `stage1-bootstrap-repo` makes `tools/buildone` add Yohane's bootstrap suite to the stage 1 build's
-repositories, so `systemd` resolves to Yohane's build. Nothing in the source changes.
+repositories, and pin the binary packages it lists (`systemd`, `libsystemd-shared`, `libsystemd0`) to it. The pin is
+needed because Yohane's systemd has the same version as Debian's, and apt took Debian's. Nothing in the source
+changes.
 
 **Restore:** delete `stage1-bootstrap-repo` once stage 1 is no longer rebuilt (after stage 2).
