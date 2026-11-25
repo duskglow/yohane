@@ -1,0 +1,30 @@
+diff -ruN a/debian/control b/debian/control
+--- a/debian/control	2025-04-01 14:43:26.000000000 +0000
++++ b/debian/control	2026-11-25 13:34:22.524058008 +0000
+@@ -51,14 +51,6 @@
+ Package-Type: udeb
+ Build-Profiles: <!noudeb>
+ 
+-Package: newt-tcl
+-Architecture: any
+-Section: interpreters
+-Depends: libnewt0.52 (=${binary:Version}) , tcl8.6, ${misc:Depends}, ${shlibs:Depends}
+-Description: NEWT module for Tcl
+- This module allows you to build a text UI for your Tcl scripts
+- using newt.
+-
+ Package: python3-newt
+ Architecture: any
+ Multi-Arch: same
+diff -ruN a/debian/rules b/debian/rules
+--- a/debian/rules	2025-04-01 14:43:26.000000000 +0000
++++ b/debian/rules	2026-11-25 13:34:22.521058046 +0000
+@@ -51,7 +51,7 @@
+ 	cp /usr/share/automake-$(AM_VERS)/install-sh ./install-sh
+ 	dh_auto_configure  -- $(CONFIGURE_ARGS) CFLAGS='-I/usr/include/tcl8.6 $(CFLAGS) -DMARCH=\"$(DEB_HOST_MULTIARCH)\" '  \
+ 		$(PYTHONSUPPORT) \
+-		CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" FFLAGS="$(FFLAGS)"  WHIPTCLLIB=whiptcl
++		CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" FFLAGS="$(FFLAGS)"
+ 
+ override_dh_auto_build:
+ 	dh_auto_build

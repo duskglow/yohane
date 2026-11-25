@@ -12,3 +12,5 @@ This keeps large build-dependency chains out of the minimal bootstrap set (they 
 **How:** a patch removes `libcorosync-common-dev`, `libdlm-dev`, `libdlmcontrol-dev`, `libsanlock-dev` from `debian/control` and disables what needs them.
 
 **Restored in the full pass,** once the system rebuilds itself; Snow Halation ships the full-featured build.
+
+**Patch `0001-no-lvmlockd.patch` (2026-11-25):** the drop list removes sanlock, dlm and corosync, but the rules still enabled `--enable-lvmlockd-dlm` and `--enable-lvmlockd-sanlock`, and configure stopped (libsanlock_client not found). The patch drops both flags; with no lock manager, lvmlockd isn't built, so the `lvm2-lockd` package goes too. Local LVM, dmeventd and lvmpolld are unchanged.

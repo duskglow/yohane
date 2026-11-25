@@ -1,0 +1,26 @@
+diff -ruN a/debian/libxdmcp-dev.install b/debian/libxdmcp-dev.install
+--- a/debian/libxdmcp-dev.install	2026-11-25 13:33:44.000000000 +0000
++++ b/debian/libxdmcp-dev.install	2026-11-25 13:34:22.458058855 +0000
+@@ -2,4 +2,3 @@
+ usr/lib/*/libXdmcp.a
+ usr/lib/*/libXdmcp.so
+ usr/lib/*/pkgconfig/xdmcp.pc
+-usr/share/doc/libXdmcp/*.txt  usr/share/doc/libxdmcp-dev
+diff -ruN a/debian/rules b/debian/rules
+--- a/debian/rules	2026-11-25 13:33:44.000000000 +0000
++++ b/debian/rules	2026-11-25 13:34:22.455058894 +0000
+@@ -23,12 +23,12 @@
+ override_dh_auto_configure:
+ 	dh_auto_configure -- \
+ 		--disable-silent-rules \
+-		--with-xmlto \
++		--without-xmlto \
+ 		--without-fop
+ 
+ override_dh_auto_install:
+ 	dh_auto_install
+-	find debian/tmp/usr/share/doc/libXdmcp -name '*.xml' -delete
++	[ ! -d debian/tmp/usr/share/doc/libXdmcp ] || find debian/tmp/usr/share/doc/libXdmcp -name '*.xml' -delete
+ 
+ override_dh_install:
+ 	dh_install --fail-missing --exclude=libXdmcp.la --exclude .html --exclude .css --exclude .db
