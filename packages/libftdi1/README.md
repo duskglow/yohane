@@ -19,7 +19,7 @@ binding (libftdipp1) is unchanged.
 **Restore** in the full pass, when Boost is built in full.
 
 
-## Stage 2: dropped build dependencies (libboost-test-dev libconfuse-dev)
+## Stage 2: dropped build dependencies (libconfuse-dev; libboost-test-dev was listed too, but the Boost patch already removes it)
 
 Neither is in Yohane's build set: Boost.Test is for the test suite (libftdi1 is built without tests, T2), and libconfuse is only for the ftdi_eeprom tool.
 
