@@ -16,6 +16,15 @@ glibc's binaries are never imported (libniji provides libc6 and friends), and a
 package Yohane builds itself (in the bootstrap, niji or unstable suite) is
 never imported, so a name has exactly one Yohane origin.
 
+For a source Yohane builds (one with binaries in those suites), only its
+Architecture: all packages may be imported, and only while Yohane builds the
+same source version Devuan does. Its architecture-dependent packages come from
+Yohane's build even when they hold no ELF (comerr-dev, gcc-14-multilib: they
+pin their siblings' exact versions). When Yohane patched the source (version
+...yohaneN), its arch:all packages must be Yohane's builds too, since Devuan's
+pin a version Yohane does not ship. Imported packages that break these rules
+are removed from "imported" on every run.
+
 IMPORT-LIST files have "package version" lines (tools/builddeps writes them as
 NAME.import). --closure adds the install closure of the given packages (for
 example the essential set, build-essential and apt, which a build root needs at
@@ -88,13 +97,30 @@ def main():
                 wanted[p[0]] = p[1]
 
     # Names Yohane builds itself: never imported.
-    ours = set()
+    # Sources Yohane builds, with the source versions it builds them at.
+    ours, oursrc = set(), {}
     for s in YOHANE_SUITES:
-        r = subprocess.run(["reprepro", "-b", repro, "list", s], capture_output=True, text=True)
+        r = subprocess.run(["reprepro", "-b", repro, "--list-format=${package} ${$source} ${$sourceversion}\n",
+                            "list", s], capture_output=True, text=True)
         for line in r.stdout.splitlines():
-            m = re.match(r"^\S+: (\S+) ", line)
-            if m:
-                ours.add(m.group(1))
+            p = line.split()
+            if len(p) == 3:
+                ours.add(p[0])
+                oursrc.setdefault(p[1], set()).add(p[2])
+
+    def refused(n, b):
+        """Why binary n (index info b) must not be imported, or None."""
+        if n in ours:
+            return "built by Yohane"
+        if NEVER.match(b["src"]):
+            return f"from {b['src']} (libniji provides it)"
+        if b["src"] in oursrc:
+            if b["arch"] != "all":
+                return f"architecture-dependent, from {b['src']}, which Yohane builds"
+            if b["srcver"] not in oursrc[b["src"]]:
+                return (f"from {b['src']} {b['srcver']}; Yohane builds {' '.join(sorted(oursrc[b['src']]))}, "
+                        "so it builds this package too")
+        return None
     current = {}
     r = subprocess.run(["reprepro", "-b", repro, "list", "imported"], capture_output=True, text=True)
     for line in r.stdout.splitlines():
@@ -136,7 +162,7 @@ def main():
             for st in read_stanzas(os.path.join(lists, fn)):
                 n, v = st["Package"], st["Version"]
                 m = re.match(r"^(\S+)(?:\s+\((.+)\))?$", st.get("Source", n))
-                bins.setdefault((n, v), dict(src=m.group(1), arch=st.get("Architecture", ""),
+                bins.setdefault((n, v), dict(src=m.group(1), srcver=m.group(2) or v, arch=st.get("Architecture", ""),
                                              url=base.rstrip("/") + "/" + st["Filename"], sha=st.get("SHA256", "")))
 
         def candidate(n):
@@ -161,9 +187,18 @@ def main():
                     problems.append(f"{n} {v}: not on the mirror any more, and no candidate"); continue
                 moved.append(f"{n}: {v} -> {c}"); v = c
             b = bins[(n, v)]
-            if NEVER.match(b["src"]):
-                skipped.append(f"{n}: from {b['src']} (libniji provides it)"); continue
+            why = refused(n, b)
+            if why:
+                skipped.append(f"{n}: {why}"); continue
             plan[n] = (v, b)
+
+        # Already imported, but now refused (Yohane started building its source, or patched it): remove.
+        prune = []
+        for n, v in sorted(current.items()):
+            b = bins.get((n, v))
+            why = refused(n, b) if b else ("built by Yohane" if n in ours else None)
+            if why:
+                prune.append((n, why))
 
         print(f"mkimported: {len(plan)} to import, {len(skipped)} skipped, {len(moved)} moved on the mirror, "
               f"{len(problems)} problems")
@@ -173,11 +208,20 @@ def main():
             die("fix the problems above first")
 
         todo = {n: vb for n, vb in plan.items() if current.get(n) != vb[0]}
-        print(f"mkimported: {len(todo)} new or changed (the rest are already in 'imported')")
+        print(f"mkimported: {len(todo)} new or changed (the rest are already in 'imported'); "
+              f"{len(prune)} to remove from 'imported'")
+        for n, why in prune:
+            print(f"  remove {n}: {why}")
         if dry:
             for n, (v, b) in sorted(todo.items()):
                 print(f"  {n} {v} {b['arch']} {b['src']}")
             return
+        if prune:
+            r = subprocess.run(["reprepro", "-b", repro, "--waitforlock=360", "remove", "imported"]
+                               + [n for n, _ in prune], capture_output=True, text=True)
+            if r.returncode:
+                die("reprepro remove failed:\n" + r.stdout[-3000:] + r.stderr[-3000:])
+            print(f"mkimported: removed {len(prune)} packages from 'imported'")
 
         dl = os.path.join(root, "debs")
         os.makedirs(dl)

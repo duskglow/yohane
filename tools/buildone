@@ -71,10 +71,16 @@ case "$STAGE" in
            export YOHANE_CHROOT=${YOHANE_CHROOT_STAGE2:?set YOHANE_CHROOT_STAGE2};;
   stage3)  opts=(--no-arch-all --arch-any); dbo="noautodbgsym"; patches=yes
            export YOHANE_CHROOT=${YOHANE_CHROOT_STAGE3:?set YOHANE_CHROOT_STAGE3};;
+  # Stage "indep": the Architecture: all packages of a source Yohane patched (version ...yohaneN). Devuan's
+  # arch:all builds pin the unpatched version (libgs10-common for libgs10), so Yohane builds its own, once, at the
+  # patched source version, in the stage 1 root; stages 2 and 3 binNMU only the arch-dependent packages, which
+  # keep depending on the source version. Built like stage 1; the driver publishes them to "imported".
+  indep)   opts=(--arch-all --no-arch-any); dbo="noautodbgsym"; patches=yes
+           export YOHANE_CHROOT=${YOHANE_CHROOT_STAGE1:?set YOHANE_CHROOT_STAGE1};;
   *) echo "RESULT error 0 - unknown-stage"; exit 2;;
 esac
 # The stages that build what may be published: tests on (nocheck for T2), retry without tests, gate, staging.
-case "$STAGE" in stage1|stage2|stage3) bootstrap_stage=yes;; *) bootstrap_stage=no;; esac
+case "$STAGE" in stage1|stage2|stage3|indep) bootstrap_stage=yes;; *) bootstrap_stage=no;; esac
 # Yohane versions its own builds from stage 2 on (decision 26; design section 3): binNMU style, the source
 # unchanged and "+yohane1" appended to every binary's version. Stages 2 and 3 use the same suffix and the same
 # fixed changelog timestamp (it becomes SOURCE_DATE_EPOCH), so their outputs can be compared byte for byte.
