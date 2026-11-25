@@ -151,7 +151,7 @@ def publish(c, stage, src, ver):
         event(c, f"publish-failed {stage}: {src} {ver}: expected one .changes in {d}, found {len(changes)}")
         return "publish-failed"
     env = dict(os.environ, GNUPGHOME=c["gnupghome"])
-    p = subprocess.run(["reprepro", "-b", c["reprepro"], "--ignore=wrongdistribution", "include", suite,
+    p = subprocess.run(["reprepro", "-b", c["reprepro"], "--waitforlock=360", "--ignore=wrongdistribution", "include", suite,
                         os.path.join(d, changes[0])], capture_output=True, text=True, env=env)
     if p.returncode != 0:
         event(c, f"publish-failed {stage}: {src} {ver} into {suite}: " + (p.stderr.strip().splitlines() or ["?"])[-1][:200])

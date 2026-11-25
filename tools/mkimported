@@ -204,7 +204,7 @@ def main():
             files.append(path)
         # one reprepro call per batch keeps the lock short
         for i in range(0, len(files), 200):
-            r = subprocess.run(["reprepro", "-b", repro, "--ignore=wrongdistribution", "includedeb", "imported"]
+            r = subprocess.run(["reprepro", "-b", repro, "--waitforlock=360", "--ignore=wrongdistribution", "includedeb", "imported"]
                                + files[i:i + 200], capture_output=True, text=True)
             if r.returncode:
                 die("reprepro includedeb failed:\n" + r.stdout[-3000:] + r.stderr[-3000:])
