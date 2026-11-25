@@ -16,10 +16,19 @@ diff -ruN a/debian/control b/debian/control
  Package: python3-newt
  Architecture: any
  Multi-Arch: same
+diff -ruN a/debian/libnewt-dev.install b/debian/libnewt-dev.install
+--- a/debian/libnewt-dev.install	2025-04-01 14:43:26.000000000 +0000
++++ b/debian/libnewt-dev.install	2026-11-25 14:08:58.112241057 +0000
+@@ -1,5 +1,4 @@
+ /usr/include/newt.h
+ usr/lib/*/libnewt.a 
+-tutorial/*	usr/share/doc/libnewt-dev/tutorial.html
+ usr/lib/*/libnewt.so
+ usr/lib/*/pkgconfig
 diff -ruN a/debian/rules b/debian/rules
 --- a/debian/rules	2025-04-01 14:43:26.000000000 +0000
-+++ b/debian/rules	2026-11-25 13:34:22.521058046 +0000
-@@ -51,7 +51,7 @@
++++ b/debian/rules	2026-11-25 14:08:58.109241096 +0000
+@@ -51,12 +51,10 @@
  	cp /usr/share/automake-$(AM_VERS)/install-sh ./install-sh
  	dh_auto_configure  -- $(CONFIGURE_ARGS) CFLAGS='-I/usr/include/tcl8.6 $(CFLAGS) -DMARCH=\"$(DEB_HOST_MULTIARCH)\" '  \
  		$(PYTHONSUPPORT) \
@@ -28,3 +37,8 @@ diff -ruN a/debian/rules b/debian/rules
  
  override_dh_auto_build:
  	dh_auto_build
+-	mkdir -p tutorial
+-	(cd tutorial && docbook2html ../tutorial.sgml )
+ 	ar cqv libnewt_pic.a shared/*.o
+ 
+ override_dh_auto_install:

@@ -13,4 +13,4 @@ This keeps large build-dependency chains out of the minimal bootstrap set (found
 
 **Restored in the full pass,** once the system rebuilds itself; Snow Halation ships the full-featured build.
 
-**Patch `0001-no-tcl.patch` (2026-11-25):** the drop list removes `tcl8.6-dev`, but the rules forced `WHIPTCLLIB=whiptcl` and the build failed (tcl.h not found). The patch stops forcing it and removes the `newt-tcl` package. whiptail and the libraries are unchanged.
+**Patch `0001-no-tcl-no-docbook.patch` (2026-11-25):** the drop list removes `tcl8.6-dev`, but the rules forced `WHIPTCLLIB=whiptcl` and the build failed (tcl.h not found). The patch stops forcing it and removes the `newt-tcl` package. whiptail and the libraries are unchanged. It also skips the HTML tutorial, which needs the dropped docbook-utils (docbook2html).
