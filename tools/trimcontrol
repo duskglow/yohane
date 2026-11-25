@@ -29,7 +29,9 @@ def main():
             name, value = m.group(1), m.group(2)
             start_i = i
             i += 1
-            while i < len(lines) and lines[i][:1] in (" ", "\t"):
+            # A field continues over indented lines and over comment lines, which start in column 0 ("# Other
+            # tool deps" inside gdb's Build-Depends); without the second, the field ended at the first comment.
+            while i < len(lines) and lines[i][:1] in (" ", "\t", "#"):
                 value += "\n" + lines[i]; i += 1
             n_before = len(removed)
             # drop comment lines inside the field (debhelper allows them), then split groups

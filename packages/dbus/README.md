@@ -21,3 +21,8 @@ dependencies couldn't be installed (2026-11-17). python3.13's 0001 is the same c
 
 **Restored in the full pass,** once the system rebuilds itself and libniji ships a `libc6-dbg`; Snow Halation ships the
 full-featured build.
+
+## No drop-build-deps
+
+0001-no-valgrind.patch already removes valgrind-if-available from debian/control, so a drop list naming it
+(there was one until 2026-11-25) fails: trimcontrol refuses a name it cannot find.
