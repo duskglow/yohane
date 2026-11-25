@@ -149,7 +149,9 @@ if [ "$STAGE" = stage1 ] && [ -e "$pkgdir/stage1-bootstrap-repo" ]; then
   pinned=$(grep -v '^#' "$pkgdir/stage1-bootstrap-repo" | tr -s ' \n' ' ' | sed 's/^ //; s/ $//')
   if [ -n "$pinned" ]; then
     pf=/etc/apt/preferences.d/yohane-bootstrap
-    opts+=(--chroot-setup-commands="echo 'Package: $pinned' > $pf; echo 'Pin: release n=bootstrap' >> $pf; echo 'Pin-Priority: 990' >> $pf")
+    # The root already has Devuan's build of some of them (libsystemd0) at the same version; replacing it with
+    # Yohane's counts as a downgrade to apt, which sbuild's apt-get -y refuses, so allow it for this build.
+    opts+=(--chroot-setup-commands="echo 'Package: $pinned' > $pf; echo 'Pin: release n=bootstrap' >> $pf; echo 'Pin-Priority: 990' >> $pf; echo 'APT::Get::Allow-Downgrades \"true\";' > /etc/apt/apt.conf.d/99yohane-bootstrap")
   fi
 fi
 if [ -n "$profiles" ]; then
