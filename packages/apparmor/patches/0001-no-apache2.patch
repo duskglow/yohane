@@ -1,0 +1,60 @@
+diff -ruN a/debian/control b/debian/control
+--- a/debian/control	2025-04-10 15:06:25.000000000 +0000
++++ b/debian/control	2026-11-25 05:05:38.145076636 +0000
+@@ -120,17 +120,6 @@
+  against in order to use various AppArmor functionality,
+  such as transitioning to a different AppArmor profile or hat.
+ 
+-Package: libapache2-mod-apparmor
+-Architecture: linux-any
+-Section: httpd
+-Depends: ${misc:Depends},
+-         ${shlibs:Depends}
+-Pre-Depends: ${misc:Pre-Depends}
+-Description: changehat AppArmor library as an Apache module
+- libapache2-mod-apparmor provides the Apache module needed to declare
+- various differing confinement policies when running virtual hosts in the
+- webserver by using the changehat abilities exposed through libapparmor.
+-
+ Package: libpam-apparmor
+ Architecture: linux-any
+ Depends: ${misc:Depends},
+@@ -191,3 +180,4 @@
+  dh-apparmor provides the debhelper tools used to install and migrate
+  AppArmor profiles. This is normally used from package maintainer scripts
+  during install and removal.
++
+diff -ruN a/debian/rules b/debian/rules
+--- a/debian/rules	2025-04-10 15:06:25.000000000 +0000
++++ b/debian/rules	2026-11-25 05:05:38.142076676 +0000
+@@ -14,7 +14,7 @@
+ endif
+ 
+ %:
+-	dh $@ --with=python3,apache2
++	dh $@ --with=python3
+ 
+ 
+ override_dh_auto_configure:
+@@ -154,12 +154,6 @@
+ 		DESTDIR=$(CURDIR)/debian/tmp install; \
+ 	done
+ 
+-	# Changehat via mod_apparmor
+-	cd changehat/mod_apparmor && $(MAKE) \
+-	    DESTDIR=$(CURDIR)/debian/tmp \
+-	    install
+-	# Fix rpath in mod_apparmor.so
+-	chrpath -d $(CURDIR)/debian/tmp/usr/lib/apache2/modules/mod_apparmor.so
+ 
+ 	# Changehat via libpam-apparmor
+ 	cd changehat/pam_apparmor && $(MAKE) \
+@@ -190,8 +184,6 @@
+ override_dh_compress:
+ 	dh_compress -Xextras
+ 
+-override_dh_apache2:
+-	dh_apache2 --noenable
+ 
+ override_dh_install-indep:
+ 	set -e; for profile in $(shell grep ^etc/apparmor.d/ $(CURDIR)/debian/apparmor-profiles.install | \

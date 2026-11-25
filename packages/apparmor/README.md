@@ -21,3 +21,11 @@ This keeps large build-dependency chains out of the minimal bootstrap set (they 
 **How:** `drop-build-deps` lists `python3-notify2`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
 
 **Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.
+
+## Patch: no Apache module (0001-no-apache2.patch, 2026-11-25)
+
+The drop list removes apache2-dev and dh-apache2, but debian/rules still ran the apache2 debhelper sequence and
+installed mod_apparmor, so the build stopped at "unable to load addon apache2" (first seen in stage 2: stage 1
+built apparmor unpatched). The patch drops the sequence, the mod_apparmor install and the dh_apache2 override
+from debian/rules, and the libapache2-mod-apparmor package from debian/control. apparmor stays in the set for
+dh-apparmor (bind9, cups, man-db, unbound) and libapparmor (dbus, systemd).
