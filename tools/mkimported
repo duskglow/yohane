@@ -1,0 +1,214 @@
+#!/usr/bin/python3 -I
+"""mkimported: fill the archive suite "imported" with the Devuan/Debian binaries Yohane imports.
+
+    tools/mkimported [--closure "PKG PKG ..."] [--dry-run] IMPORT-LIST...
+
+Stage 2 builds in a root made only of Yohane's own suites (design section 4: no
+binary that links glibc comes from the host distribution). The binaries Yohane
+does not rebuild still have to come from somewhere, so they are copied into
+"imported", signed with Yohane's archive key:
+
+  - Architecture: all packages (decision 1);
+  - architecture-dependent packages with no ELF objects (decision 13);
+  - binaries of the kernel and firmware sources (decision 1).
+
+glibc's binaries are never imported (libniji provides libc6 and friends), and a
+package Yohane builds itself (in the bootstrap, niji or unstable suite) is
+never imported, so a name has exactly one Yohane origin.
+
+IMPORT-LIST files have "package version" lines (tools/builddeps writes them as
+NAME.import). --closure adds the install closure of the given packages (for
+example the essential set, build-essential and apt, which a build root needs at
+run time). Versions are resolved as stage 1 resolved them: Debian trixie with
+Devuan excalibur layered over it, Devuan preferred. When the mirror has moved
+on, the current candidate is taken and the change reported.
+
+Every file is checked against the SHA256 of its signed index before it is
+included, and every architecture-dependent one is checked for ELF objects.
+
+Needs YOHANE_MIRROR, YOHANE_DEBIAN_MIRROR, YOHANE_DEBIAN_SECURITY_MIRROR,
+YOHANE_KEYRINGS, YOHANE_REPREPRO (the reprepro base directory) and GNUPGHOME
+(holding the archive signing key).
+"""
+import hashlib, os, re, subprocess, sys, tarfile, tempfile, urllib.request
+
+NOT_REBUILT_OK = re.compile(r"^(linux|linux-signed-amd64|firmware-.*)$")   # kernel and firmware: imported as is
+NEVER = re.compile(r"^glibc$")                                              # libniji replaces glibc
+YOHANE_SUITES = ("bootstrap", "niji", "unstable")
+
+
+def die(msg):
+    print(f"mkimported: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def read_stanzas(path):
+    st = {}
+    key = None
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if line == "\n":
+                if st:
+                    yield st
+                st, key = {}, None
+            elif line[0] in " \t":
+                if key:
+                    st[key] += "\n" + line.rstrip("\n")
+            else:
+                key, _, val = line.partition(":")
+                st[key] = val.strip()
+    if st:
+        yield st
+
+
+def main():
+    args = sys.argv[1:]
+    closure, dry = [], False
+    while args and args[0].startswith("--"):
+        if args[0] == "--closure":
+            closure += args[1].split(); args = args[2:]
+        elif args[0] == "--dry-run":
+            dry = True; args = args[1:]
+        else:
+            die(f"unknown option {args[0]}")
+    if not args and not closure:
+        die("usage: mkimported [--closure 'PKG ...'] [--dry-run] IMPORT-LIST...")
+    env_get = lambda k: os.environ.get(k) or die(f"set {k}")
+    mirror, deb, debsec = env_get("YOHANE_MIRROR"), env_get("YOHANE_DEBIAN_MIRROR"), env_get("YOHANE_DEBIAN_SECURITY_MIRROR")
+    keyrings, repro = env_get("YOHANE_KEYRINGS"), env_get("YOHANE_REPREPRO")
+    if not dry:
+        env_get("GNUPGHOME")
+    dkr, ukr = os.path.join(keyrings, "devuan-archive-keyring.gpg"), os.path.join(keyrings, "debian-archive-keyring.gpg")
+
+    wanted = {}
+    for fn in args:
+        for line in open(fn):
+            p = line.split()
+            if len(p) >= 2:
+                wanted[p[0]] = p[1]
+
+    # Names Yohane builds itself: never imported.
+    ours = set()
+    for s in YOHANE_SUITES:
+        r = subprocess.run(["reprepro", "-b", repro, "list", s], capture_output=True, text=True)
+        for line in r.stdout.splitlines():
+            m = re.match(r"^\S+: (\S+) ", line)
+            if m:
+                ours.add(m.group(1))
+    current = {}
+    r = subprocess.run(["reprepro", "-b", repro, "list", "imported"], capture_output=True, text=True)
+    for line in r.stdout.splitlines():
+        m = re.match(r"^\S+: (\S+) (\S+)$", line)
+        if m:
+            current[m.group(1)] = m.group(2)
+
+    with tempfile.TemporaryDirectory(prefix="yohane-imp.", dir=os.environ.get("YOHANE_SCRATCH")) as root:
+        for d in ("etc/apt/preferences.d", "var/lib/apt/lists/partial", "var/cache/apt/archives/partial", "var/lib/dpkg"):
+            os.makedirs(os.path.join(root, d), exist_ok=True)
+        open(os.path.join(root, "var/lib/dpkg/status"), "w").close()
+        with open(os.path.join(root, "etc/apt/sources.list"), "w") as f:
+            for s in ("excalibur", "excalibur-updates", "excalibur-security"):
+                f.write(f"deb [arch=amd64 signed-by={dkr}] {mirror} {s} main\n")
+            for s in ("trixie", "trixie-updates"):
+                f.write(f"deb [arch=amd64 signed-by={ukr}] {deb} {s} main\n")
+            f.write(f"deb [arch=amd64 signed-by={ukr}] {debsec} trixie-security main\n")
+        with open(os.path.join(root, "etc/apt/preferences.d/yohane-overlay"), "w") as f:
+            f.write("Package: *\nPin: release o=Devuan\nPin-Priority: 600\n\n"
+                    "Package: *\nPin: release o=Debian\nPin-Priority: 500\n\n"
+                    "Package: src:rustc-web\nPin: version *\nPin-Priority: -1\n")
+        conf = os.path.join(root, "apt.conf")
+        with open(conf, "w") as f:
+            f.write(f'Dir "{root}/";\nDir::State::status "{root}/var/lib/dpkg/status";\n'
+                    'APT::Architecture "amd64";\nAPT::Architectures { "amd64"; };\n'
+                    'Acquire::Languages "none";\nDebug::NoLocking "true";\n'
+                    'APT::Install-Recommends "false";\nAPT::Install-Suggests "false";\n')
+        env = dict(os.environ, APT_CONFIG=conf)
+        r = subprocess.run(["apt-get", "update", "-q", "--error-on=any"], env=env, capture_output=True, text=True)
+        if r.returncode:
+            die("apt-get update failed:\n" + r.stdout[-2000:] + r.stderr[-2000:])
+
+        lists = os.path.join(root, "var/lib/apt/lists")
+        bins = {}   # (name, version) -> stanza info
+        for fn in sorted(os.listdir(lists)):
+            if not fn.endswith("_Packages"):
+                continue
+            base = mirror if "_devuan_" in fn else debsec if "debian-security" in fn else deb
+            for st in read_stanzas(os.path.join(lists, fn)):
+                n, v = st["Package"], st["Version"]
+                m = re.match(r"^(\S+)(?:\s+\((.+)\))?$", st.get("Source", n))
+                bins.setdefault((n, v), dict(src=m.group(1), arch=st.get("Architecture", ""),
+                                             url=base.rstrip("/") + "/" + st["Filename"], sha=st.get("SHA256", "")))
+
+        def candidate(n):
+            r = subprocess.run(["apt-cache", "policy", n], env=env, capture_output=True, text=True)
+            m = re.search(r"Candidate: (\S+)", r.stdout)
+            return m.group(1) if m and m.group(1) != "(none)" else None
+
+        if closure:
+            r = subprocess.run(["apt-get", "install", "-s", "-q"] + closure, env=env, capture_output=True, text=True)
+            if r.returncode:
+                die("closure does not resolve:\n" + r.stdout[-2000:] + r.stderr[-2000:])
+            for m in re.finditer(r"^Inst (\S+) \((\S+) ", r.stdout, re.M):
+                wanted.setdefault(m.group(1), m.group(2))
+
+        plan, skipped, moved, problems = {}, [], [], []
+        for n, v in sorted(wanted.items()):
+            if n in ours:
+                skipped.append(f"{n}: built by Yohane"); continue
+            if (n, v) not in bins:
+                c = candidate(n)
+                if not c or (n, c) not in bins:
+                    problems.append(f"{n} {v}: not on the mirror any more, and no candidate"); continue
+                moved.append(f"{n}: {v} -> {c}"); v = c
+            b = bins[(n, v)]
+            if NEVER.match(b["src"]):
+                skipped.append(f"{n}: from {b['src']} (libniji provides it)"); continue
+            plan[n] = (v, b)
+
+        print(f"mkimported: {len(plan)} to import, {len(skipped)} skipped, {len(moved)} moved on the mirror, "
+              f"{len(problems)} problems")
+        for line in moved + problems:
+            print("  " + line)
+        if problems:
+            die("fix the problems above first")
+
+        todo = {n: vb for n, vb in plan.items() if current.get(n) != vb[0]}
+        print(f"mkimported: {len(todo)} new or changed (the rest are already in 'imported')")
+        if dry:
+            for n, (v, b) in sorted(todo.items()):
+                print(f"  {n} {v} {b['arch']} {b['src']}")
+            return
+
+        dl = os.path.join(root, "debs")
+        os.makedirs(dl)
+        files = []
+        for n, (v, b) in sorted(todo.items()):
+            with urllib.request.urlopen(b["url"], timeout=600) as r:
+                data = r.read()
+            if not b["sha"] or hashlib.sha256(data).hexdigest() != b["sha"]:
+                die(f"{n} {v}: download does not match the signed index's SHA256")
+            path = os.path.join(dl, os.path.basename(b["url"]))
+            with open(path, "wb") as f:
+                f.write(data)
+            if b["arch"] != "all" and not NOT_REBUILT_OK.match(b["src"]):
+                p = subprocess.Popen(["dpkg-deb", "--fsys-tarfile", path], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                elf = None
+                with tarfile.open(fileobj=p.stdout, mode="r|*") as tf:
+                    for mem in tf:
+                        if mem.isfile() and mem.size >= 4 and tf.extractfile(mem).read(4) == b"\x7fELF":
+                            elf = mem.name; break
+                p.stdout.close(); p.wait()
+                if elf:
+                    die(f"{n} {v} ({b['arch']}, source {b['src']}) contains ELF object {elf}: it must be built by Yohane, "
+                        "not imported")
+            files.append(path)
+        # one reprepro call per batch keeps the lock short
+        for i in range(0, len(files), 200):
+            r = subprocess.run(["reprepro", "-b", repro, "--ignore=wrongdistribution", "includedeb", "imported"]
+                               + files[i:i + 200], capture_output=True, text=True)
+            if r.returncode:
+                die("reprepro includedeb failed:\n" + r.stdout[-3000:] + r.stderr[-3000:])
+        print(f"mkimported: included {len(files)} packages into 'imported'")
+
+
+main()

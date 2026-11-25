@@ -63,8 +63,18 @@ case "$STAGE" in
                  --build-failed-commands=/usr/lib/yohane-usage-report)
            dbo="noautodbgsym"; patches=yes
            export YOHANE_CHROOT=${YOHANE_CHROOT_STAGE1U:?set YOHANE_CHROOT_STAGE1U};;
+  # Stages 2 and 3 (design section 4): built as stage 1, but in a root whose every binary comes from
+  # Yohane's own archive (tools/mkchroot --yohane-only): stage 2 from the bootstrap suite (stage 1's
+  # output), stage 3 from unstable (stage 2's output), each with libniji's own headers. Outputs are gated
+  # and staged like stage 1's; the driver's publish map says which suite they go to.
+  stage2)  opts=(--no-arch-all --arch-any); dbo="noautodbgsym"; patches=yes
+           export YOHANE_CHROOT=${YOHANE_CHROOT_STAGE2:?set YOHANE_CHROOT_STAGE2};;
+  stage3)  opts=(--no-arch-all --arch-any); dbo="noautodbgsym"; patches=yes
+           export YOHANE_CHROOT=${YOHANE_CHROOT_STAGE3:?set YOHANE_CHROOT_STAGE3};;
   *) echo "RESULT error 0 - unknown-stage"; exit 2;;
 esac
+# The stages that build what may be published: tests on (nocheck for T2), retry without tests, gate, staging.
+case "$STAGE" in stage1|stage2|stage3) bootstrap_stage=yes;; *) bootstrap_stage=no;; esac
 
 # Yohane patches: packages/<source>/patches/*.patch from the Yohane repository,
 # applied in name order to the verified Devuan source, then the build dependencies
@@ -123,11 +133,18 @@ export DEB_BUILD_OPTIONS="parallel=$jobs $dbo"
 # (T2, the packages needed only to build others). The pure stage 0 baseline uses none.
 profiles=""
 [ "$patches" = yes ] && [ -s "$pkgdir/build-profiles" ] && profiles=$(tr -s ' \n' ' ' < "$pkgdir/build-profiles")
-if [ "$STAGE" = stage1 ] || [ "$STAGE" = stage1u ]; then
+if [ "$bootstrap_stage" = yes ] || [ "$STAGE" = stage1u ]; then
   profiles="$profiles nodoc"
   [ -n "${YOHANE_NOCHECK_LIST:-}" ] && grep -qx "$SRC" "$YOHANE_NOCHECK_LIST" 2>/dev/null && profiles="$profiles nocheck"
 fi
 profiles=$(echo $profiles | tr ' ' '\n' | sort -u | tr '\n' ',' | sed 's/^,//; s/,$//')
+# A stage 1 source that declares packages/<source>/stage1-bootstrap-repo resolves its build dependencies with
+# Yohane's bootstrap suite added (at $YOHANE_ARCHIVE). It is for sources whose build dependency exists only as a
+# Yohane build in stage 1 (systemd: Debian's needs glibc 2.41); without it they would wait for stage 2, and the
+# stage 2 root, which holds only stage 1 output, would lack their binaries.
+if [ "$STAGE" = stage1 ] && [ -e "$pkgdir/stage1-bootstrap-repo" ]; then
+  opts+=(--extra-repository="deb ${YOHANE_ARCHIVE:?set YOHANE_ARCHIVE (Yohane archive URL)} bootstrap main")
+fi
 if [ -n "$profiles" ]; then
   opts+=(--profiles="$profiles")
   export DEB_BUILD_PROFILES="${profiles//,/ }"
@@ -177,7 +194,7 @@ run_sbuild
 # Stage 1: a failure in the build step (where the package's own tests run) is a
 # finding; keep its log as .check.log.zst and build once more with nocheck, so
 # the bootstrap can proceed. Result "oknc" = built, but its tests failed on libniji.
-if [ "$STAGE" = stage1 ] && [ "$res" = fail ] && [ "${failstage:-}" = build ] \
+if [ "$bootstrap_stage" = yes ] && [ "$res" = fail ] && [ "${failstage:-}" = build ] \
    && [[ ",$profiles," != *",nocheck,"* ]]; then
   mv -f "$dest" "$logdir/${SRC}_${VER}.check.log.zst"
   first_secs=$secs
@@ -191,8 +208,8 @@ report_log=$dest
 [ "$res" = oknc ] && report_log="$logdir/${SRC}_${VER}.check.log.zst"
 cp -f "$work"/*.buildinfo "$logdir/" 2>/dev/null
 
-# Stage 1 gate and staging for the bootstrap suite.
-if [ "$STAGE" = stage1 ] && { [ "$res" = ok ] || [ "$res" = oknc ]; }; then
+# Gate and staging (stage 1 for the bootstrap suite, stages 2 and 3 for the suites the driver maps them to).
+if [ "$bootstrap_stage" = yes ] && { [ "$res" = ok ] || [ "$res" = oknc ]; }; then
   allowed="${YOHANE_CHROOT%.tar.zst}.allowed-2.4x"
   if [ ! -s "$allowed" ]; then
     # The GLIBC_2.40/2.41 symbols the chroot's libniji libc.so.6 defines.

@@ -20,6 +20,14 @@
 # system flavour at VERSION replaces glibc in the chroot, with throwaway glibc
 # headers; see tools/niji-swap.sh. Its log is printed at the end.
 #
+# With --yohane-only SUITE --yohane-repo URL (stage 2 and later; design section
+# 4, "no host tools"), every binary in the chroot comes from Yohane's own
+# archive: SUITE (bootstrap for stage 2, unstable for stage 3), niji (libniji's
+# libc6 family, with its own headers) and imported (the Architecture: all and
+# ELF-free binaries Yohane imports, tools/mkimported). Devuan and Debian appear
+# only as deb-src lines, so sbuild can fetch sources; none of their binaries can
+# be installed. --debian is still needed for those deb-src lines.
+#
 # Uses mmdebstrap --mode=unshare (no root). Each mirror is trusted only through
 # its signed InRelease, checked against the pinned keyrings in --keyrings DIR;
 # never [trusted=yes]. The keyrings are also installed in the chroot so that
@@ -44,6 +52,7 @@ while [ $# -gt 1 ]; do
     --debian-suite) DSUITE=$2; shift 2;;
     --niji-swap|--liella-swap) NIJI_VERSION=$2; shift 2;;   # stage 1: swap libniji's system flavour in (decision 12); --liella-swap is the old name
     --yohane-repo) YOHANE_REPO=$2; shift 2;;      # where the "niji" suite is served
+    --yohane-only) YOHANE_ONLY=$2; shift 2;;      # stage 2+: binaries only from Yohane's archive (this suite + niji + imported)
     *) echo "unknown option: $1" >&2; exit 2;;
   esac
 done
@@ -102,6 +111,38 @@ if [ -n "${NIJI_VERSION:-}" ]; then
           --customize-hook="upload $(cd "$(dirname "$0")" && pwd)/niji-swap.sh /tmp/yohane-niji-swap.sh"
           --customize-hook="chroot \"\$1\" sh /tmp/yohane-niji-swap.sh '$NIJI_VERSION' '$YOHANE_REPO'"
           --customize-hook='rm -f "$1/tmp/yohane-niji-swap.sh"; cat "$1/var/log/yohane-niji-swap.log" >&2')
+fi
+
+if [ -n "${YOHANE_ONLY:-}" ]; then
+  # Stage 2+ (design section 4): binaries only from Yohane's archive. Replaces the sources and hooks set up above.
+  AKR="$KEYRINGS/yohane-archive-keyring.gpg"
+  [ -z "${NIJI_VERSION:-}" ] || { echo "mkchroot: --yohane-only and --niji-swap don't mix" >&2; exit 2; }
+  [ -n "${YOHANE_REPO:-}" ] || { echo "mkchroot: --yohane-only needs --yohane-repo URL" >&2; exit 2; }
+  [ -n "$DEBIAN" ] || { echo "mkchroot: --yohane-only needs --debian and --debian-security (for deb-src)" >&2; exit 2; }
+  [ -r "$AKR" ] || { echo "mkchroot: missing $AKR" >&2; exit 2; }
+  SOURCES="deb $YOHANE_REPO $YOHANE_ONLY main
+deb $YOHANE_REPO niji main
+deb $YOHANE_REPO imported main"
+  for s in "$SUITE" "$SUITE-updates" "$SUITE-security"; do SOURCES+="
+deb-src $MIRROR $s main"; done
+  SOURCES+="
+deb-src $DEBIAN $DSUITE main
+deb-src $DEBIAN $DSUITE-updates main
+deb-src $DEBSEC $DSUITE-security main"
+  # deb-src is resolved Devuan first, as stage 1 resolves sources.
+  PREFS="Package: *
+Pin: release o=Devuan
+Pin-Priority: 600"
+  hooks=(--setup-hook="mkdir -p \"\$1/etc/apt/preferences.d\" && printf '%s\n' '$PREFS' > \"\$1/etc/apt/preferences.d/yohane-overlay\""
+         --customize-hook="mkdir -p \"\$1/etc/apt/trusted.gpg.d\""
+         --customize-hook="copy-in $AKR $KR $DKR /etc/apt/trusted.gpg.d/"
+         --customize-hook='ln -sfn debian "$1/etc/dpkg/origins/default"'
+         # Gate (tools/yohane-only-gate.sh): every installed binary must come from Yohane's archive.
+         --customize-hook="upload $(cd "$(dirname "$0")" && pwd)/yohane-only-gate.sh /tmp/yohane-only-gate.sh"
+         --customize-hook="chroot \"\$1\" sh /tmp/yohane-only-gate.sh '$YOHANE_REPO'"
+         --customize-hook='rm -f "$1/tmp/yohane-only-gate.sh"')
+  keyring=(--keyring="$KEYRINGS")
+  SUITE=$YOHANE_ONLY
 fi
 
 case "$OUT" in *.tar.zst) ;; *) echo "mkchroot: OUTPUT must end in .tar.zst" >&2; exit 2;; esac
