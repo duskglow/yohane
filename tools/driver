@@ -220,6 +220,7 @@ def run(stage):
     lock = threading.Lock()
     stop = threading.Event()
     outstanding = {h: 0 for h in hosts}
+    backoff, failures = {}, {}         # host -> time before which it gets no new builds; consecutive start failures
     logs = c.get("logs", "")
     buildone_path = c.get("buildone", "/home/claude/aqours/tools/buildone")
 
@@ -283,13 +284,19 @@ def run(stage):
                             f"setsid nohup {buildone_path} {stage} {src} {ver} >/dev/null 2>&1 < /dev/null &"],
                            capture_output=True, text=True)
         if p.returncode != 0:
-            event(c, f"host-trouble {h}: could not start {src} {ver} (ssh exit {p.returncode}): "
-                     + (p.stderr.strip().splitlines() or ["-"])[-1][:200])
             con.execute("update jobs set status=?, host=null, started=null where stage=? and source=? and version=?",
                         (QSTATUS, stage, src, ver))
             with lock:
                 outstanding[h] -= 1
+                # Back off: a host we can't reach (or can't log in to) would otherwise be retried every 5 s forever.
+                n = failures[h] = failures.get(h, 0) + 1
+                wait = min(60 * 2 ** (n - 1), 1800)
+                backoff[h] = time.time() + wait
+            event(c, f"host-trouble {h}: could not start {src} {ver} (ssh exit {p.returncode}): "
+                     + (p.stderr.strip().splitlines() or ["-"])[-1][:200] + f"; retrying {h} in {wait} s")
             return
+        with lock:
+            failures.pop(h, None)
         time.sleep(30)          # let buildone clear any stale result file before the first poll
         adopt(h, src, ver)      # polls the result file; releases the host's count when done
 
@@ -300,7 +307,7 @@ def run(stage):
         launched = False
         with lock:
             for h in hosts:
-                if outstanding[h] < hosts[h]["max"] and host_available(c, h):
+                if outstanding[h] < hosts[h]["max"] and backoff.get(h, 0) <= time.time() and host_available(c, h):
                     job = next_job()
                     if job is None:
                         break
@@ -309,7 +316,8 @@ def run(stage):
                     t.start(); threads.append(t); launched = True
         with lock:
             busy = sum(outstanding.values())
-        if not launched and busy == 0:
+            waiting = any(t > time.time() for t in backoff.values())   # a backed-off host may still take the queue
+        if not launched and busy == 0 and not waiting:
             break
         time.sleep(5)
     for t in threads:
