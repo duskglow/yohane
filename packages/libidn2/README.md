@@ -1,14 +1,14 @@
 Source: libidn2
 Applies-To: excalibur
-Kind: bootstrap
-Status: planned (patch written when the package is first built)
+Kind: none
+Status: retired
 
 # libidn2
 
-**Bootstrap only (decision 16).** During the bootstrap, Yohane builds libidn2 without gnulib's git use (pulls git and through it Go).
-This keeps large build-dependency chains out of the minimal bootstrap set (found with
-`tools/builddeps`' chain report, `T2.why`).
+**No changes.** Yohane builds libidn2 as Devuan ships it.
 
-**How:** a patch removes `git` from `debian/control` and disables what needs them.
-
-**Restored in the full pass,** once the system rebuilds itself; Snow Halation ships the full-featured build.
+**History:** during the bootstrap (decision 16) this list dropped `git`, which gnulib's
+clone step uses, to keep git and through it Go out of the minimal bootstrap set. The patch
+that would have replaced the clone was never needed: stage 1 built libidn2 with git, and git
+is now built by Yohane. From the indep stage on, the drop took effect without that patch and
+`dh_gnulib_clone` failed ("git: No such file or directory"), so the drop was removed.
