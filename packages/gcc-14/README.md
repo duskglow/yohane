@@ -1,7 +1,7 @@
 Source: gcc-14
 Applies-To: 14.2.0-19
 Kind: build-fix (0001); bootstrap (planned trims)
-Status: 0001 active; bootstrap trims planned (patch written when first needed)
+Status: 0001 and 0002 active
 
 # gcc-14
 
@@ -45,3 +45,13 @@ Found by stage 2, whose build root holds only Yohane's archive (design section 4
 **Correction (2026-11-25):** the six multilib names above were taken from Devuan's .dsc. `0001-no-multilib.patch`
 already removes them from `debian/control`, so trimcontrol found nothing to drop and failed. `drop-build-deps` now
 lists only `locales-all` from this section.
+
+## 0002: bootstrap languages (the planned trims, written 2026-11-25)
+
+**Problem.** The drop list removes `gnat-14`, `gnat-13`, `gdc-14`, `cargo`, `nvptx-tools` and `amdgcn-tools-19`, but
+the packaging still enabled Ada, D, Rust and the GPU offload compilers, so the indep build stopped in configure
+("GNAT is required to build ada"). Stage 1 never applied the drop list, so it built them with Devuan's compilers.
+
+**Change.** `0002-bootstrap-languages.patch` defaults the packaging's own `WITHOUT_LANG` switch to
+`ada,d,rust,nvptx,gcn` in `debian/rules.defs`. C, C++, Fortran, Go and Modula-2 are still built.
+`WITHOUT_LANG=` (empty) or `DEB_BUILD_OPTIONS=lang=...` restores the full set once the dropped compilers exist.

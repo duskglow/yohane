@@ -1,0 +1,15 @@
+diff -ruN a/debian/rules.defs b/debian/rules.defs
+--- a/debian/rules.defs	2026-11-25 11:13:57.925520989 +0000
++++ b/debian/rules.defs	2026-11-25 11:14:45.283017250 +0000
+@@ -480,6 +480,11 @@
+ DEB_LANG	:= $(strip $(subst $(COMMA), ,$(patsubst lang=%,%,$(DEB_LANG_OPT))))
+ DEB_NOLANG_OPT	:= $(filter nolang=%,$(DEB_BUILD_OPTIONS))
+ DEB_NOLANG	:= $(strip $(subst $(COMMA), ,$(patsubst nolang=%,%,$(DEB_NOLANG_OPT))))
++
++# Yohane (bootstrap trims, decision 16): no Ada, D or Rust front end and no nvptx/gcn offload compilers by default.
++# Their build dependencies (gnat, gdc, cargo, nvptx-tools, amdgcn-tools) are dropped, see packages/gcc-14/README.md.
++# WITHOUT_LANG= (empty) or DEB_BUILD_OPTIONS=lang=... restores them.
++WITHOUT_LANG	?= ada,d,rust,nvptx,gcn
+ lfilt	= $(strip $(if $(DEB_LANG), \
+ 		$(if $(filter $(1) $(2),$(DEB_LANG)),yes),$(3)))
+ nlfilt	= $(strip $(if $(DEB_NOLANG), \
