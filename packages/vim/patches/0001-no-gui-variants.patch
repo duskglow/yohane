@@ -1,0 +1,101 @@
+diff -ruN a/debian/control b/debian/control
+--- a/debian/control	2026-11-04 22:12:34.000000000 +0000
++++ b/debian/control	2026-11-25 11:58:42.755563425 +0000
+@@ -154,38 +154,6 @@
+  version of Vim.  See the other vim-* packages if you need more
+  (or less).
+ 
+-Package: vim-gtk3
+-Architecture: any
+-Depends:
+- vim-common (= ${source:Version}),
+- vim-gui-common (= ${source:Version}),
+- vim-runtime (= ${source:Version}),
+- ${misc:Depends},
+- ${shlibs:Depends},
+-Suggests:
+- cscope,
+- fonts-dejavu,
+- gnome-icon-theme,
+- vim-doc,
+-Provides:
+- editor,
+- gvim (= ${binary:Version}),
+- vim (= ${binary:Version}),
+- vim-lua (= ${binary:Version}),
+- vim-perl (= ${binary:Version}),
+- vim-python3 (= ${binary:Version}),
+- ${vim:Ruby-Provides},
+- vim-tcl (= ${binary:Version}),
+-Description: Vi IMproved - enhanced vi editor - with GTK3 GUI
+- Vim is an almost compatible version of the UNIX editor Vi.
+- .
+- Many new features have been added: multi level undo, syntax
+- highlighting, command line history, on-line help, filename
+- completion, block operations, folding, Unicode support, etc.
+- .
+- This package contains a version of vim compiled with a GTK3 GUI
+- and support for scripting with Lua, Perl, Python 3,${vim:Ruby-Desc} and Tcl.
+-
+ Package: vim-nox
+ Architecture: any
+ Depends:
+@@ -214,46 +182,6 @@
+  This package contains a version of vim compiled with support for
+  scripting with Lua, Perl, Python 3,${vim:Ruby-Desc} and Tcl but no GUI.
+ 
+-Package: vim-motif
+-Architecture: any
+-Depends:
+- vim-common (= ${source:Version}),
+- vim-gui-common (= ${source:Version}),
+- vim-runtime (= ${source:Version}),
+- ${misc:Depends},
+- ${shlibs:Depends},
+-Suggests:
+- cscope,
+- vim-doc,
+-Provides:
+- editor,
+- gvim (= ${binary:Version}),
+- vim (= ${binary:Version}),
+- vim-lua (= ${binary:Version}),
+- vim-perl (= ${binary:Version}),
+- vim-python3 (= ${binary:Version}),
+- ${vim:Ruby-Provides},
+- vim-tcl (= ${binary:Version}),
+-Description: Vi IMproved - enhanced vi editor - with Motif GUI
+- Vim is an almost compatible version of the UNIX editor Vi.
+- .
+- Many new features have been added: multi level undo, syntax
+- highlighting, command line history, on-line help, filename
+- completion, block operations, folding, Unicode support, etc.
+- .
+- This package contains a version of vim compiled with a Motif GUI
+- and support for scripting with Lua, Perl, Python 3,${vim-Ruby-Desc} and Tcl.
+-
+-Package: vim-athena
+-Architecture: all
+-Depends:
+- vim-motif,
+- ${misc:Depends},
+-Section: oldlibs
+-Description: Vi IMproved - enhanced vi editor (dummy package)
+- This is a transitional package to install the vim-motif package.  You may
+- remove this package if nothing depends on it.
+-
+ Package: xxd
+ Architecture: any
+ Multi-Arch: foreign
+diff -ruN a/debian/rules b/debian/rules
+--- a/debian/rules	2026-11-04 22:12:34.000000000 +0000
++++ b/debian/rules	2026-11-25 11:58:42.698564176 +0000
+@@ -122,8 +122,6 @@
+ # depending on vim-runtime.
+ 
+ VARIANTS += vim-tiny
+-VARIANTS += vim-gtk3
+-VARIANTS += vim-motif
+ VARIANTS += vim-nox
+ VARIANTS += vim-basic
+ 

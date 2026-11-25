@@ -18,3 +18,9 @@ This keeps large build-dependency chains out of the minimal bootstrap set (found
 locales-all comes from glibc, which Yohane does not build; libniji provides no locales-all. It is test-only (<!nocheck>).
 
 Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.
+
+**Patch `0001-no-gui-variants.patch` (written 2026-11-25):** removes `vim-gtk3` and `vim-motif` from `VARIANTS` in
+`debian/rules`, and the `vim-gtk3`, `vim-motif` and `vim-athena` (transitional, to vim-motif) packages from
+`debian/control`. Stage 1 never applied the drop list; stage 2 did, and the GTK 3 variant's configure failed
+("could not configure X"). vim, vim-nox and vim-tiny are unchanged; `vim-gui-common` stays (its GUI recommends are
+simply absent).

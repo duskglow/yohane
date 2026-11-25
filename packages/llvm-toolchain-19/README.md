@@ -16,3 +16,7 @@ Status: active
 The SPIR-V translator, SPIRV-Tools and wasi-libc are for GPU and WebAssembly targets Yohane does not build. Each is listed as "X | hello", where hello is a placeholder meaning "build without X"; Yohane does not build hello either, so whole groups are removed.
 
 Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.
+
+**Patch `0001-no-wasm-libcxx.patch` (2026-11-25):** sets `LIBCXX_WASM_ENABLE=no` in `debian/rules` and removes the
+`libc++-19-dev-wasm32` and `libc++abi-19-dev-wasm32` packages (both depend on wasi-libc) from `debian/control`.
+Without it the rules' preconfigure step checks for wasi-libc and stops ("Could not find wasi-libc on the system").
