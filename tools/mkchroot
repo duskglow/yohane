@@ -142,7 +142,9 @@ Pin-Priority: 600"
          --customize-hook="chroot \"\$1\" sh /tmp/yohane-only-gate.sh '$YOHANE_REPO'"
          --customize-hook='rm -f "$1/tmp/yohane-only-gate.sh"')
   keyring=(--keyring="$KEYRINGS")
-  SUITE=$YOHANE_ONLY
+  # No suite name for mmdebstrap: it takes Essential packages only from the suite it is given, and libc-bin
+  # (Essential, ldconfig) is in niji, not SUITE. The sources above already admit only Yohane's suites.
+  SUITE=
 fi
 
 case "$OUT" in *.tar.zst) ;; *) echo "mkchroot: OUTPUT must end in .tar.zst" >&2; exit 2;; esac
