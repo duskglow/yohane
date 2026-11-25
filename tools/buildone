@@ -153,6 +153,9 @@ if [ "$bootstrap_stage" = yes ] || [ "$STAGE" = stage1u ]; then
   profiles="$profiles nodoc"
   [ -n "${YOHANE_NOCHECK_LIST:-}" ] && grep -qx "$SRC" "$YOHANE_NOCHECK_LIST" 2>/dev/null && profiles="$profiles nocheck"
 fi
+# Yohane is amd64-only: libniji has no 32-bit or x32 libc, so nothing is built biarch. Stage 1 could still install
+# Devuan's lib32 packages; the Yohane-only roots from stage 2 on can't, and nobiarch tells the sources so.
+case "$STAGE" in stage2|stage3|indep) profiles="$profiles nobiarch";; esac
 profiles=$(echo $profiles | tr ' ' '\n' | sort -u | tr '\n' ',' | sed 's/^,//; s/,$//')
 # A stage 1 source that declares packages/<source>/stage1-bootstrap-repo resolves its build dependencies with
 # Yohane's bootstrap suite added (at $YOHANE_ARCHIVE). It is for sources whose build dependency exists only as a

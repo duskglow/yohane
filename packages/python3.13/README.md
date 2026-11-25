@@ -35,3 +35,9 @@ build dependency and the patch is gone.
 **How:** `drop-build-deps` lists `xvfb`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
 
 **Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.
+
+## Stage 2: dropped build dependencies (locales-all)
+
+locales-all comes from glibc, which Yohane does not build; libniji provides no locales-all. It serves locale tests.
+
+Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.

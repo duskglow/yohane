@@ -2,3 +2,4 @@ libfuse3-dev
 libsdl2-dev
 qemu-system
 xorriso
+gcc-multilib

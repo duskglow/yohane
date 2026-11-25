@@ -33,3 +33,9 @@ This keeps large build-dependency chains out of the minimal bootstrap set (they 
 **How:** a patch removes `libsdl2-dev`, `qemu-system`, `libfuse3-dev`, `xorriso` from `debian/control` and disables what needs them.
 
 **Restored in the full pass,** once the system rebuilds itself; Snow Halation ships the full-featured build.
+
+## Stage 2: dropped build dependencies (gcc-multilib)
+
+Yohane is amd64-only (libniji has no 32-bit libc). grub's i386-pc and ia32 EFI platforms are freestanding code compiled with -m32 by the amd64 compiler and don't link a 32-bit libc.
+
+Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.

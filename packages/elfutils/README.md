@@ -30,3 +30,9 @@ installed (2026-11-16).
 
 **Change.** `0002-no-gcc-multilib.patch` removes it from `debian/control`. The tests that compile 32-bit objects are
 expected to skip themselves when `-m32` doesn't work; stage 1's test results confirm it.
+
+## Stage 2: dropped build dependencies (gcc-multilib)
+
+Its tests build 32-bit binaries with gcc-multilib. Yohane is amd64-only: libniji has no 32-bit libc, so there is no multilib to test against.
+
+Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.

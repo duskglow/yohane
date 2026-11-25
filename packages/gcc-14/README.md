@@ -35,3 +35,9 @@ build environment still installs Devuan's binaries; the patch is written when st
 and disables what needs them.
 
 **Restored in the full pass,** once the system rebuilds itself; Snow Halation ships the full-featured build.
+
+## Stage 2: dropped build dependencies (g++-multilib lib32gcc-s1 lib32z1-dev libc6-dev-i386 libc6-dev-x32 libx32gcc-s1 locales-all)
+
+Yohane is amd64-only: libniji has no 32-bit or x32 libc, so gcc-14 is built without biarch (stage 1's build already produced no lib32/libx32 packages). locales-all comes from glibc, which Yohane does not build; libniji provides no locales-all.
+
+Found by stage 2, whose build root holds only Yohane's archive (design section 4): stage 1 could still install these from Devuan.

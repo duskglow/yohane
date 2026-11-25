@@ -1,1 +1,5 @@
 g++-multilib
+llvm-spirv-19
+spirv-tools
+wasi-libc
+hello
