@@ -1,7 +1,7 @@
 Source: libidn
 Applies-To: excalibur
 Kind: bootstrap
-Status: planned (patch written when the package is first built)
+Status: active
 
 # libidn
 
@@ -9,7 +9,10 @@ Status: planned (patch written when the package is first built)
 This keeps a large build-dependency chain out of the minimal bootstrap set (found with
 `tools/builddeps`' chain report, `T2.why`).
 
-**How:** `drop-build-deps` removes `graphviz` from `debian/control`; a patch disables what needs it if the build does.
+**How:** `drop-build-deps` removes `graphviz` from `debian/control`. graphviz's `dot` draws the manual's components
+diagram (`libidn-components.png`), which stage 2 failed on. `patches/0001-no-components-diagram.patch` takes the
+image out of the manual: the `@image` line in `doc/libidn.texi`, the PNG's install and build dependencies in
+`doc/Makefile.am`, and its line in `debian/libidn-dev.install`. The paragraph describing the components stays.
 
 **Restored in the full pass,** once the system rebuilds itself; Snow Halation ships the full-featured build.
 

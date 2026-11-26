@@ -1,7 +1,2 @@
 default-libmysqlclient-dev
 libpq-dev
-libx11-dev
-libxaw7-dev
-libxext-dev
-libxmu-dev
-libxt-dev

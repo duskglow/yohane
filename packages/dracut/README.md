@@ -12,4 +12,9 @@ Status: active
 
 **How:** `drop-build-deps` lists `asciidoc-base`; `tools/buildone` removes them from `debian/control` with `tools/trimcontrol`. The binary packages that need them may then fail to build; if so, a patch under `patches/` drops them from `debian/control` too, and this section says which.
 
-**Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps`.
+**Patch (2026-11-26):** the build still ran asciidoc for the man pages (`man/lsinitrd.1.xml` failed in stage 2).
+`patches/0001-no-manpages.patch` configures with `--disable-documentation`, dracut's own switch for skipping the
+pages, and removes `debian/dracut-core.manpages`, since there are no pages to install.
+
+**Restore** in the full pass, or when a package Yohane ships needs it: remove those names from `drop-build-deps` and
+the patch.

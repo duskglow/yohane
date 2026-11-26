@@ -1,0 +1,47 @@
+Description: Yohane bootstrap: build the manual without the components diagram (no graphviz)
+ graphviz is dropped from the build dependencies during the bootstrap (decision 16), and the
+ diagram is drawn with dot. The manual keeps the paragraph describing the components; the image,
+ its install rule and debian/libidn-dev.install's line for it go. See packages/libidn/README.md.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+---
+--- a/debian/libidn-dev.install	2025-03-21 12:51:22.000000000 +0000
++++ b/debian/libidn-dev.install	2026-11-26 15:34:17.870172924 +0000
+@@ -2,4 +2,3 @@
+ usr/lib/*/lib*.a
+ usr/lib/*/lib*so
+ usr/lib/*/pkgconfig/*
+-usr/share/info/libidn-components.png
+--- a/doc/libidn.texi	2025-03-21 10:35:33.000000000 +0000
++++ b/doc/libidn.texi	2026-11-26 15:34:17.868172945 +0000
+@@ -219,7 +219,6 @@
+ interfaces to all components are available for applications, no
+ component within the library is hidden from the application.
+ 
+-@image{libidn-components}
+ 
+ @node Supported Platforms
+ @section Supported Platforms
+--- a/doc/Makefile.am	2025-03-21 10:35:33.000000000 +0000
++++ b/doc/Makefile.am	2026-11-26 15:34:17.865172977 +0000
+@@ -27,10 +27,8 @@
+ libidn_TEXINFOS = fdl-1.3.texi idn-help.texi
+ libidn_TEXINFOS += example.txt example2.txt example3.txt
+ libidn_TEXINFOS += example4.txt example5.txt
+-libidn_TEXINFOS += $(gdoc_TEXINFOS) libidn-components.png
++libidn_TEXINFOS += $(gdoc_TEXINFOS)
+ 
+-imagesdir = $(infodir)
+-images_DATA = libidn-components.png
+ 
+ DISTCLEANFILES = \
+ 	libidn-components.eps libidn-components.png libidn-components.pdf
+@@ -57,7 +55,7 @@
+ pdf-recursive: libidn-components.pdf
+ dvi-recursive: libidn-components.eps
+ ps-recursive: libidn-components.eps
+-info-recursive: $(top_srcdir)/.version libidn-components.png
++info-recursive: $(top_srcdir)/.version
+ 
+ idn-help.texi: idn.1
+ 	$(AM_V_GEN)env LANG=C $(top_builddir)/src/idn$(EXEEXT) --help | $(SED) -n -e '/^  *-/p' > $@.tmp

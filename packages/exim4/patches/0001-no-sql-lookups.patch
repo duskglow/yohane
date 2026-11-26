@@ -1,0 +1,27 @@
+Description: Yohane bootstrap: exim4-daemon-heavy without the MySQL and PostgreSQL lookups
+ default-libmysqlclient-dev and libpq-dev are dropped from the build dependencies during the
+ bootstrap (decision 16). After the heavy daemon's Local/Makefile is set up, the two lookups are
+ switched off and their include and library flags removed; LDAP and SQLite lookups stay.
+ See packages/exim4/README.md.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+---
+--- a/debian/rules	2026-09-25 09:25:38.000000000 +0000
++++ b/debian/rules	2026-11-26 15:35:16.502553978 +0000
+@@ -116,6 +116,16 @@
+ 		b-$$i/Local/Makefile && \
+ 		cp EDITME.eximon b-$$i/Local/eximon.conf ;\
+ 		done
++	# Yohane bootstrap (decision 16): no MySQL/PostgreSQL lookups in exim4-daemon-heavy,
++	# their client libraries are dropped from Build-Depends. See packages/exim4/README.md.
++	if [ -f b-exim4-daemon-heavy/Local/Makefile ]; then \
++		sed -i -e 's/^LOOKUP_MYSQL=yes/# LOOKUP_MYSQL=yes/' \
++			-e 's/^LOOKUP_PGSQL=yes/# LOOKUP_PGSQL=yes/' \
++			-e 's/^LOOKUP_INCLUDE=.*/LOOKUP_INCLUDE=/' \
++			-e 's/ -lmysqlclient -lpq//' \
++			b-exim4-daemon-heavy/Local/Makefile ; \
++		! grep -n 'mysql\|pgsql\|-lpq' b-exim4-daemon-heavy/Local/Makefile | grep -v '^[0-9]*:#' ; \
++	fi
+ 
+ override_dh_auto_build:
+ 	set -e ; for i in $(daemons) ; do \
