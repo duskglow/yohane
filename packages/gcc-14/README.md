@@ -55,3 +55,23 @@ the packaging still enabled Ada, D, Rust and the GPU offload compilers, so the i
 **Change.** `0002-bootstrap-languages.patch` defaults the packaging's own `WITHOUT_LANG` switch to
 `ada,d,rust,nvptx,gcn` in `debian/rules.defs`. C, C++, Fortran, Go and Modula-2 are still built.
 `WITHOUT_LANG=` (empty) or `DEB_BUILD_OPTIONS=lang=...` restores the full set once the dropped compilers exist.
+
+## 0003: no fixincludes (2026-11-27)
+
+**Problem.** When gcc builds, fixincludes scans the C library's headers with text heuristics and writes "fixed"
+copies into `include-fixed/`, and the in-tree compiler uses those copies in place of `/usr/include`. Against libniji's
+headers it rewrote `stdio.h`, `wchar.h`, `stdlib.h`, `unistd.h`, `pthread.h`, `malloc.h` and `string.h` (it rewrites
+stock glibc's `pthread.h` too). The rewritten `stdio.h` broke `va_list` (libgomp's `plugin-gcn.c` failed), and
+libstdc++'s configure decided there is no C99 stdio, which would have taken `std::snprintf`, `std::vsnprintf` and
+floating-point `std::to_string` out of every C++ build.
+
+**Change.** `0003-disable-fixincludes.patch` adds `--disable-fixincludes` to `CONFARGS` in `debian/rules2`. Arch and
+Void configure gcc this way, and gcc does it itself for musl targets. Debian already deletes `include-fixed` from its
+packages, so the packages don't change; only the build compiler stops seeing rewritten headers.
+
+**Permanent.** This is libniji's owner's decision (coord 2026-11-27T0017Z: "Fix what we are responsible for, disable
+what needs to be disabled"). libniji also changes its headers so that fixincludes leaves them alone (story
+HEADERS-STAGE2-GAPS-I), and adds a fixincludes check to its header probes.
+
+**Check:** the build log has no `Applying ... to <header>` lines from fixincludes, and libstdc++'s configure says
+`checking for ISO C99 support in <stdio.h> for C++11... yes`.

@@ -1,0 +1,23 @@
+Description: Yohane: configure gcc with --disable-fixincludes
+ fixincludes rewrites C library headers that trip its text heuristics into include-fixed/, and the
+ in-tree compiler uses those copies. Against libniji's headers that broke va_list (libgomp) and
+ made libstdc++'s configure decide there is no C99 stdio. Arch and Void configure gcc this way, and
+ gcc does it for musl. Debian removes include-fixed from its packages, so only the build changes.
+ See packages/gcc-14/README.md.
+Author: Yohane Linux Maintainers <aqours@koiren.ai>
+Forwarded: not-needed
+---
+--- a/debian/rules2	2025-02-19 15:04:38.000000000 +0000
++++ b/debian/rules2	2026-11-27 00:19:30.303765426 +0000
+@@ -269,6 +269,11 @@
+ 	--prefix=/$(PF) \
+ 	--with-gcc-major-version-only \
+ 
++# Yohane: no fixincludes (as Arch, and gcc itself for musl). Its text heuristics rewrite non-glibc C library
++# headers into include-fixed/, which the in-tree compiler then uses (libgomp, libstdc++ configure). Debian deletes
++# include-fixed from the packages anyway. See packages/gcc-14/README.md.
++CONFARGS += --disable-fixincludes
++
+ ifneq (,$(with_build_sysroot))
+   CONFARGS += \
+ 	--with-as=$(binutils_prefix)/$(DEB_TARGET_GNU_TYPE)-as \
